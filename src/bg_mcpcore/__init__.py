@@ -49,12 +49,23 @@ from .server import (
     resolve_client_id,
     run_transport,
 )
+from .settings import (
+    BaseMcpSettings,
+    Environment,
+    get_settings,
+    has_value,
+    split_csv,
+    validate_fernet_key,
+    validate_persistence,
+)
 
 __version__ = "0.1.0"
 __author__ = "BAUER GROUP"
 __email__ = "info@bauer-group.com"
 
 __all__ = [
+    "BaseMcpSettings",
+    "Environment",
     "OIDCDiscoveryError",
     "__version__",
     "build_client_storage",
@@ -62,6 +73,8 @@ __all__ = [
     "build_rate_limit_middleware",
     "discover_endpoints",
     "get_logger",
+    "get_settings",
+    "has_value",
     "init_sentry",
     "now_iso",
     "patch_dual_stack_socket",
@@ -72,6 +85,9 @@ __all__ = [
     "resolve_client_id",
     "run_transport",
     "setup_logging",
+    "split_csv",
+    "validate_fernet_key",
+    "validate_persistence",
     "warn_no_auth",
     "warn_role_audit_only",
 ]

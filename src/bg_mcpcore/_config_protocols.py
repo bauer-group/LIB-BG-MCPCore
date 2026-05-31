@@ -45,3 +45,23 @@ class OidcSettings(StorageSettings, Protocol):
     oidc_auth_uri: str | None
     oidc_token_uri: str | None
     oidc_jwks_uri: str | None
+
+
+class PersistenceSettings(Protocol):
+    """Attributes the shared fail-closed persistence validator reads.
+
+    Read-only properties (not plain attributes) so a concrete settings class
+    whose ``environment`` / ``auth_mode`` are StrEnum subtypes still satisfies
+    the protocol (covariant read).
+    """
+
+    @property
+    def environment(self) -> str: ...
+    @property
+    def auth_mode(self) -> str: ...
+    @property
+    def auth_jwt_signing_key(self) -> SecretStr: ...
+    @property
+    def auth_redis_url(self) -> str | None: ...
+    @property
+    def auth_storage_encryption_key(self) -> SecretStr | None: ...
