@@ -1,0 +1,18 @@
+"""Auth building blocks shared across servers.
+
+Inbound provider modes (none/oidc here; entra/google in the [oauth-providers]
+extra) and outbound resolvers are registered via entry points in Phase 3.
+"""
+
+from __future__ import annotations
+
+from .generic_oidc import OIDCDiscoveryError, build_generic_oidc_provider, discover_endpoints
+from .storage import LEGACY_DISK_SALT, build_client_storage
+
+__all__ = [
+    "LEGACY_DISK_SALT",
+    "OIDCDiscoveryError",
+    "build_client_storage",
+    "build_generic_oidc_provider",
+    "discover_endpoints",
+]

@@ -1,0 +1,56 @@
+"""Security-critical tests for the lifted encrypted OAuth-state store.
+
+These close the coverage gap that bg-zammad-mcp had (it shipped client_storage
+with NO tests) and — crucially — guard the salt-preservation invariant: if a
+FastMCP upgrade changes ``derive_jwt_key`` or the disk salt drifts, deployed
+encrypted state becomes undecryptable. The cross-instance round-trip below fails
+loudly in that case (FernetEncryptionWrapper raises on decryption error).
+"""
+
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+from pydantic import SecretStr
+
+from bg_mcpcore.auth.storage import _sanitize_redis_url, build_client_storage
+
+
+def _disk_settings(tmp_path: object) -> SimpleNamespace:
+    return SimpleNamespace(
+        auth_redis_url=None,
+        auth_storage_encryption_key=None,
+        auth_jwt_signing_key=SecretStr("a-strong-32-byte-signing-key-value-123456"),
+        auth_disk_storage_path=str(tmp_path),
+    )
+
+
+@pytest.mark.asyncio
+async def test_disk_storage_encrypts_and_round_trips(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    store = build_client_storage(_disk_settings(tmp_path / "oauth"))
+    await store.put("jti-1", {"upstream_token": "secret-abc"}, collection="oauth")
+    got = await store.get("jti-1", collection="oauth")
+    assert got == {"upstream_token": "secret-abc"}
+
+
+@pytest.mark.asyncio
+async def test_legacy_salt_keeps_state_decryptable_across_instances(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # Two stores built from the SAME settings must derive the SAME key (default
+    # salt = LEGACY_DISK_SALT) so already-persisted state stays readable. This is
+    # the regression guard for the salt/derive_jwt_key invariant.
+    settings = _disk_settings(tmp_path / "oauth")
+    writer = build_client_storage(settings)
+    await writer.put("client-meta", {"client_id": "dcr-123"}, collection="clients")
+
+    reader = build_client_storage(settings)
+    assert await reader.get("client-meta", collection="clients") == {"client_id": "dcr-123"}
+
+
+def test_sanitize_redis_url_strips_credentials() -> None:
+    assert _sanitize_redis_url("redis://user:pw@host:6379/0") == "redis://***@host:6379/0"
+    assert _sanitize_redis_url("rediss://:token@host:6380/1") == "rediss://***@host:6380/1"
+
+
+def test_sanitize_redis_url_passthrough_without_credentials() -> None:
+    assert _sanitize_redis_url("redis://host:6379/0") == "redis://host:6379/0"

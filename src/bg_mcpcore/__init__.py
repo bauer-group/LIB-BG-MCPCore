@@ -14,18 +14,64 @@ Design pillars:
     * Secure — fail-closed auth invariants are enforced in core and cannot be
       switched off by a profile.
 
-The public API is intentionally small. Higher-level symbols (load_profile,
-build_app_from_profile, make_cli, BaseMcpSettings, the ToolProvider/
-AuthHeaderSource protocols) are added as their modules land per implementation
-phase and re-exported here.
+The public surface grows per implementation phase. Phase 1 exposes the lifted
+infrastructure (logging, banner, sentry, rate limiting, operational routes,
+transport runner, encrypted OAuth-state storage, generic OIDC). The profile
+engine (load_profile / build_app_from_profile / make_cli) and BaseMcpSettings
+arrive in Phases 2-3.
 
 MIT License — Copyright (c) 2026 BAUER GROUP.
 """
 
 from __future__ import annotations
 
+from .auth import (
+    OIDCDiscoveryError,
+    build_client_storage,
+    build_generic_oidc_provider,
+    discover_endpoints,
+)
+from .observability import (
+    get_logger,
+    init_sentry,
+    now_iso,
+    print_banner,
+    setup_logging,
+    warn_no_auth,
+    warn_role_audit_only,
+)
+from .server import (
+    build_rate_limit_middleware,
+    patch_dual_stack_socket,
+    register_healthz_route,
+    register_index_route,
+    register_logo_route,
+    resolve_client_id,
+    run_transport,
+)
+
 __version__ = "0.1.0"
 __author__ = "BAUER GROUP"
 __email__ = "info@bauer-group.com"
 
-__all__ = ["__version__"]
+__all__ = [
+    "OIDCDiscoveryError",
+    "__version__",
+    "build_client_storage",
+    "build_generic_oidc_provider",
+    "build_rate_limit_middleware",
+    "discover_endpoints",
+    "get_logger",
+    "init_sentry",
+    "now_iso",
+    "patch_dual_stack_socket",
+    "print_banner",
+    "register_healthz_route",
+    "register_index_route",
+    "register_logo_route",
+    "resolve_client_id",
+    "run_transport",
+    "setup_logging",
+    "warn_no_auth",
+    "warn_role_audit_only",
+]
