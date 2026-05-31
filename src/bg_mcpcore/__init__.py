@@ -25,12 +25,21 @@ MIT License — Copyright (c) 2026 BAUER GROUP.
 
 from __future__ import annotations
 
+from .app import build_app_from_profile
 from .auth import (
     OIDCDiscoveryError,
     build_client_storage,
     build_generic_oidc_provider,
     discover_endpoints,
 )
+from .auth.resolvers import (
+    AuthHeaderSource,
+    BearerEnvResolver,
+    NoAuthResolver,
+    StaticHeaderResolver,
+)
+from .cli import make_cli
+from .http import UpstreamClient
 from .observability import (
     get_logger,
     init_sentry,
@@ -40,6 +49,8 @@ from .observability import (
     warn_no_auth,
     warn_role_audit_only,
 )
+from .plugins import build_auth_provider, build_outbound_resolver, build_tool_provider
+from .profile import Profile, ProfileError, load_profile
 from .server import (
     build_rate_limit_middleware,
     patch_dual_stack_socket,
@@ -58,30 +69,55 @@ from .settings import (
     validate_fernet_key,
     validate_persistence,
 )
+from .tools import (
+    ConstructingToolProvider,
+    ToolContext,
+    ToolProvider,
+    available_tools,
+    register_tool,
+)
 
 __version__ = "0.1.0"
 __author__ = "BAUER GROUP"
 __email__ = "info@bauer-group.com"
 
 __all__ = [
+    "AuthHeaderSource",
     "BaseMcpSettings",
+    "BearerEnvResolver",
+    "ConstructingToolProvider",
     "Environment",
+    "NoAuthResolver",
     "OIDCDiscoveryError",
+    "Profile",
+    "ProfileError",
+    "StaticHeaderResolver",
+    "ToolContext",
+    "ToolProvider",
+    "UpstreamClient",
     "__version__",
+    "available_tools",
+    "build_app_from_profile",
+    "build_auth_provider",
     "build_client_storage",
     "build_generic_oidc_provider",
+    "build_outbound_resolver",
     "build_rate_limit_middleware",
+    "build_tool_provider",
     "discover_endpoints",
     "get_logger",
     "get_settings",
     "has_value",
     "init_sentry",
+    "load_profile",
+    "make_cli",
     "now_iso",
     "patch_dual_stack_socket",
     "print_banner",
     "register_healthz_route",
     "register_index_route",
     "register_logo_route",
+    "register_tool",
     "resolve_client_id",
     "run_transport",
     "setup_logging",

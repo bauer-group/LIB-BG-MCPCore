@@ -7,11 +7,21 @@ extra) and outbound resolvers are registered via entry points in Phase 3.
 from __future__ import annotations
 
 from .generic_oidc import OIDCDiscoveryError, build_generic_oidc_provider, discover_endpoints
+from .resolvers import (
+    AuthHeaderSource,
+    BearerEnvResolver,
+    NoAuthResolver,
+    StaticHeaderResolver,
+)
 from .storage import LEGACY_DISK_SALT, build_client_storage
 
 __all__ = [
     "LEGACY_DISK_SALT",
+    "AuthHeaderSource",
+    "BearerEnvResolver",
+    "NoAuthResolver",
     "OIDCDiscoveryError",
+    "StaticHeaderResolver",
     "build_client_storage",
     "build_generic_oidc_provider",
     "discover_endpoints",

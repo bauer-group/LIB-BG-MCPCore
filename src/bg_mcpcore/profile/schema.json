@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+  "title": "Profile",
+  "$defs": {
+    "AuthConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "inbound": {
+          "$ref": "#/$defs/InboundAuthConfig"
+        },
+        "outbound": {
+          "$ref": "#/$defs/OutboundAuthConfig"
+        }
+      },
+      "title": "AuthConfig",
+      "type": "object"
+    },
+    "BackendConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "base_url": {
+          "title": "Base Url",
+          "type": "string"
+        },
+        "api_base_path": {
+          "default": "",
+          "title": "Api Base Path",
+          "type": "string"
+        },
+        "http_timeout": {
+          "default": 30,
+          "maximum": 300,
+          "minimum": 1,
+          "title": "Http Timeout",
+          "type": "integer"
+        },
+        "verify_tls": {
+          "default": true,
+          "title": "Verify Tls",
+          "type": "boolean"
+        },
+        "user_agent": {
+          "default": "bg-mcpcore",
+          "title": "User Agent",
+          "type": "string"
+        }
+      },
+      "required": [
+        "base_url"
+      ],
+      "title": "BackendConfig",
+      "type": "object"
+    },
+    "InboundAuthConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "default": "none",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "InboundAuthConfig",
+      "type": "object"
+    },
+    "OutboundAuthConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "default": "none",
+          "title": "Type",
+          "type": "string"
+        },
+        "header": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Header"
+        },
+        "value_from_env": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value From Env"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "resolver": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolver"
+        }
+      },
+      "title": "OutboundAuthConfig",
+      "type": "object"
+    },
+    "RoutesConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "healthz": {
+          "default": true,
+          "title": "Healthz",
+          "type": "boolean"
+        },
+        "logo": {
+          "default": true,
+          "title": "Logo",
+          "type": "boolean"
+        },
+        "index": {
+          "default": true,
+          "title": "Index",
+          "type": "boolean"
+        }
+      },
+      "title": "RoutesConfig",
+      "type": "object"
+    },
+    "ToolsConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "register": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Register"
+        },
+        "include": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Include",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "ToolsConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "instructions": {
+      "default": "",
+      "title": "Instructions",
+      "type": "string"
+    },
+    "icon_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Icon Url"
+    },
+    "website_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Website Url"
+    },
+    "backend": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BackendConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "auth": {
+      "$ref": "#/$defs/AuthConfig"
+    },
+    "tools": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ToolsConfig"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/ToolsConfig"
+          },
+          "type": "array"
+        }
+      ],
+      "title": "Tools"
+    },
+    "routes": {
+      "$ref": "#/$defs/RoutesConfig"
+    }
+  },
+  "required": [
+    "id",
+    "display_name",
+    "tools"
+  ],
+  "type": "object"
+}

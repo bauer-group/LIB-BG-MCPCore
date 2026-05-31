@@ -153,6 +153,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "rich" },
     { name = "structlog" },
+    { name = "typer" },
 ]
 
 [package.optional-dependencies]
@@ -219,6 +220,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.0" },
     { name = "structlog", specifier = ">=24.4.0,<26.0.0" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0.0" },
+    { name = "typer", specifier = ">=0.15.0,<1.0.0" },
 ]
 provides-extras = ["dev", "docs", "oauth-providers", "openapi", "redis", "tasks", "testkit"]
 
