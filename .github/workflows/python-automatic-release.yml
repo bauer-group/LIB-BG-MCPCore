@@ -1,0 +1,36 @@
+name: 🐍 CI/CD Pipeline (Automatic Release)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'docs/**'
+      - '*.md'
+      - '*.MD'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'docs/**'
+      - '*.md'
+      - '*.MD'
+  workflow_dispatch:
+    inputs:
+      skip-pypi:
+        description: 'Skip PyPI publishing (GitHub release only)'
+        type: boolean
+        default: false
+
+jobs:
+  python-release:
+    name: 🐍 Python Semantic Release Pipeline
+    uses: bauer-group/automation-templates/.github/workflows/python-semantic-release.yml@main
+    with:
+      python-version: '3.14'
+      run-tests: true
+      run-security-scan: true
+      security-engine: 'both'
+      build-local-wheel: true
+      skip-pypi: ${{ inputs.skip-pypi || false }}
+    secrets: inherit

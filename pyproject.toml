@@ -1,0 +1,165 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bg-mcpcore"
+dynamic = ["version"]
+description = "BAUER GROUP MCP framework — config-driven, pluggable REST-API MCP servers on FastMCP"
+readme = "README.MD"
+license = "MIT"
+requires-python = ">=3.14"
+authors = [
+    { name = "BAUER GROUP", email = "info@bauer-group.com" },
+    { name = "Karl Bauer", email = "karl.bauer@bauer-group.com" },
+]
+keywords = ["mcp", "fastmcp", "oauth", "openapi", "rest", "ai", "claude", "framework"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+# ── Mandatory core: the lean, stable surface every server needs ──────────────
+# Volatile / single-consumer deps (OpenAPI tooling, azure-identity, redis,
+# docket) live in the optional-dependencies extras below — a server pays only
+# for what it imports.
+dependencies = [
+    "fastmcp>=3.0.0,<4.0.0",
+    "httpx>=0.28.1,<1.0.0",
+    "pydantic>=2.10.0,<3.0.0",
+    "pydantic-settings>=2.14.1,<3.0.0",
+    "structlog>=24.4.0,<26.0.0",
+    "rich>=13.7.0,<15.0.0",
+    "cryptography>=43.0.0,<49.0.0",
+    # Disk-backed encrypted OAuth-state store in core; Redis is the [redis] extra.
+    "py-key-value-aio[disk]>=0.4.4,<1.0.0",
+]
+
+[project.optional-dependencies]
+# Spec-driven tool generation (FastMCP.from_openapi + ref resolution).
+openapi = ["jsonref>=1.1.0,<2.0.0"]
+# Redis-backed OAuth-state store (multi-replica deployments).
+redis = ["py-key-value-aio[redis]>=0.4.4,<1.0.0"]
+# Cloud IdP inbound providers (Entra / Google ship inside FastMCP; this extra
+# is a marker that a server opted into them — kept explicit for clarity).
+oauth-providers = []
+# Long-running task execution (bulk exports) via docket.
+tasks = ["fastmcp[tasks]>=3.0.0,<4.0.0"]
+# Reusable pytest fixtures + stubs, exposed as a pytest11 plugin.
+testkit = [
+    "pytest>=8.3.0,<10.0.0",
+    "pytest-asyncio>=0.24.0,<2.0.0",
+    "respx>=0.22.0,<1.0.0",
+]
+
+dev = [
+    # Testing
+    "pytest>=8.3.0,<10.0.0",
+    "pytest-asyncio>=0.24.0,<2.0.0",
+    "pytest-httpx>=0.35.0,<1.0.0",
+    "pytest-cov>=6.0.0,<8.0.0",
+    "respx>=0.22.0,<1.0.0",
+    # Quality
+    "ruff>=0.7.0",
+    "mypy>=1.13.0",
+    # Build & release (CI uses the reusable workflow; these are for local runs)
+    "python-semantic-release>=9.0.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
+    "pre-commit>=3.5.0",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.26.0",
+]
+
+# Scaffolder CLI: `bg-mcpcore new <name>` (implemented in Phase 7).
+[project.scripts]
+bg-mcpcore = "bg_mcpcore.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/bauer-group/LIB-BG-MCPCore"
+Source = "https://github.com/bauer-group/LIB-BG-MCPCore"
+Issues = "https://github.com/bauer-group/LIB-BG-MCPCore/issues"
+Changelog = "https://github.com/bauer-group/LIB-BG-MCPCore/blob/main/CHANGELOG.md"
+
+# ── Hatch build ──────────────────────────────────────────────────────────────
+[tool.hatch.version]
+path = "src/bg_mcpcore/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bg_mcpcore"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/bg_mcpcore",
+    "/tests",
+    "/examples",
+    "/docs",
+    "README.MD",
+    "CHANGELOG.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+# ── Semantic release ─────────────────────────────────────────────────────────
+# Version is dynamic (sourced from __init__.py via hatch), so we update ONLY the
+# __version__ variable — no version_toml (there is no static project.version).
+[tool.semantic_release]
+version_variables = ["src/bg_mcpcore/__init__.py:__version__"]
+branch = "main"
+build_command = "python -m build"
+commit_parser = "conventional"
+major_on_zero = false
+changelog_file = "CHANGELOG.md"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "ci", "build", "revert"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+# ── Tooling (mirrors bg-zammad-mcp / bg-shlink-mcp) ──────────────────────────
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = ["-ra", "--strict-markers", "--strict-config", "--tb=short"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pydantic._internal.*",
+    "ignore::DeprecationWarning:starlette.*",
+]
+markers = [
+    "integration: marks tests that hit external services (deselect with '-m \"not integration\"')",
+]
+
+[tool.coverage.run]
+source = ["src/bg_mcpcore"]
+omit = ["tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
