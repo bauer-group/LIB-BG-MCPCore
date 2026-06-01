@@ -92,5 +92,40 @@ def make_cli(
 
 
 def main() -> None:
-    """Console-script entry. The `new <name>` scaffolder lands in Phase 7."""
-    typer.echo("bg-mcpcore framework. The `bg-mcpcore new <name>` scaffolder lands in Phase 7.")
+    """Console-script entry (`bg-mcpcore`): the project scaffolder + version."""
+    cli = typer.Typer(
+        name="bg-mcpcore",
+        help="BAUER GROUP MCP Core — scaffold and inspect config-driven MCP servers.",
+        no_args_is_help=True,
+        add_completion=False,
+    )
+
+    @cli.command()
+    def new(
+        name: str = typer.Argument(..., help="Project slug (e.g. 'mautic', 'my-api')."),
+        directory: str = typer.Option(
+            ".", "--dir", "-d", help="Parent directory for the new project."
+        ),
+        force: bool = typer.Option(
+            False, "--force", "-f", help="Overwrite a non-empty destination."
+        ),
+    ) -> None:
+        """Generate a Tier-1 OpenAPI MCP server skeleton named NAME."""
+        from .scaffold import ScaffoldError, scaffold
+
+        try:
+            dest = scaffold(name, directory, force=force)
+        except ScaffoldError as exc:
+            typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
+            raise typer.Exit(1) from exc
+        typer.secho(f"Created {dest}", fg=typer.colors.GREEN)
+        typer.echo("Next: edit the profile's spec source + backend, then `pip install -e \".[test]\" && python src/main.py`.")
+
+    @cli.command()
+    def version() -> None:
+        """Print the bg-mcpcore version."""
+        from . import __version__
+
+        typer.echo(__version__)
+
+    cli()
