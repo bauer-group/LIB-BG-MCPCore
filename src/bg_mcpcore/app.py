@@ -19,7 +19,12 @@ from typing import TYPE_CHECKING, Any
 
 from .http.client import UpstreamClient
 from .observability import get_logger, init_sentry, print_banner, setup_logging, warn_no_auth
-from .plugins import build_auth_provider, build_outbound_resolver, build_tool_provider
+from .plugins import (
+    build_auth_middleware,
+    build_auth_provider,
+    build_outbound_resolver,
+    build_tool_provider,
+)
 from .profile.loader import ProfileError
 from .profile.models import Profile
 from .server.middleware import build_rate_limit_middleware
@@ -43,6 +48,7 @@ async def build_app_from_profile(
     static_dir: str | Path | None = None,
     lifespan: Any | None = None,
     extra_sensitive_fragments: Sequence[str] = (),
+    extra_middleware: Sequence[Any] = (),
 ) -> FastMCP:
     """Build a fully wired FastMCP instance from a declarative profile."""
     from fastmcp import FastMCP
@@ -126,6 +132,11 @@ async def build_app_from_profile(
     rate_limit_mw = build_rate_limit_middleware(settings)
     if rate_limit_mw is not None:
         mcp.add_middleware(rate_limit_mw)
+
+    # Auth-mode middleware (e.g. Entra tenant allowlist), discovered config-driven
+    # via the auth_middleware entry-point group, then any caller-supplied extras.
+    for middleware in (*build_auth_middleware(settings), *extra_middleware):
+        mcp.add_middleware(middleware)
 
     total = 0
     for provider in registering:

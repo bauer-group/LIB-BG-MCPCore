@@ -84,6 +84,23 @@ def build_auth_provider(settings: Any) -> Any:
     raise ProfileError(f"Unknown AUTH_MODE '{mode}'. Known modes: {', '.join(known)}")
 
 
+def build_auth_middleware(settings: Any) -> list[Any]:
+    """Optional post-auth middleware for the active mode (e.g. Entra tenant gate).
+
+    Discovered via the bg_mcpcore.auth_middleware entry-point group; a factory
+    returns a middleware or None. Config-driven, so the core assembler adds it
+    without per-server wiring. Unknown modes simply contribute nothing.
+    """
+    mode = str(settings.auth_mode)
+    eps = _discover("bg_mcpcore.auth_middleware")
+    out: list[Any] = []
+    if mode in eps:
+        middleware = eps[mode].load()(settings)
+        if middleware is not None:
+            out.append(middleware)
+    return out
+
+
 # ── Outbound auth resolvers ──────────────────────────────────────────────────
 
 
@@ -174,4 +191,9 @@ def build_tool_provider(cfg: ToolsConfig) -> Any:
     raise ProfileError(f"Unknown tools.source '{source}'. Known: {', '.join(known)}")
 
 
-__all__ = ["build_auth_provider", "build_outbound_resolver", "build_tool_provider"]
+__all__ = [
+    "build_auth_middleware",
+    "build_auth_provider",
+    "build_outbound_resolver",
+    "build_tool_provider",
+]

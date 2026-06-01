@@ -94,6 +94,16 @@ bg-mcpcore = "bg_mcpcore.cli:main"
 [project.entry-points."bg_mcpcore.tool_sources"]
 openapi = "bg_mcpcore.openapi.tool_provider:create_openapi_tool_provider"
 
+# Inbound IdP modes from the [oauth-providers] extra (FastMCP ships the providers).
+[project.entry-points."bg_mcpcore.auth_providers"]
+entra-single = "bg_mcpcore.providers.entra:build_entra_provider"
+entra-multi = "bg_mcpcore.providers.entra:build_entra_provider"
+google = "bg_mcpcore.providers.google:build_google_provider"
+
+# Post-auth middleware: the Entra multi-tenant allowlist gate.
+[project.entry-points."bg_mcpcore.auth_middleware"]
+entra-multi = "bg_mcpcore.providers.middleware:build_tenant_middleware"
+
 # Reusable pytest fixtures, available once bg-mcpcore[testkit] is installed.
 [project.entry-points.pytest11]
 bg_mcpcore_testkit = "bg_mcpcore.testing.plugin"
