@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE. DO NOT EDIT. Edit docs/SECURITY.template.MD instead. -->
-<!-- Generated on 2026-06-01 13:05:04 UTC -->
+<!-- Generated on 2026-06-01 13:09:02 UTC -->
 
 # Security Policy
 
@@ -46,10 +46,10 @@ Report via **GitHub Security Advisories** — a secure, private channel:
 
 We provide security updates for supported versions only.
 
-## 🛡️ Security Model (framework-specific)
+## 🛡️ Security Measures
 
-bg-mcpcore enforces several invariants that downstream servers inherit and
-cannot relax:
+bg-mcpcore enforces framework-specific invariants that downstream servers inherit
+and cannot relax:
 
 - **Fail-closed auth**: `AUTH_MODE=none` is forbidden in production, and a JWT
   signing key is mandatory for any active auth mode (`BaseMcpSettings`).
@@ -86,10 +86,19 @@ locally before opening a PR.
 - **🛡️ Security Team**: via GitHub Security Advisories
 - **📧 Primary**: security@bauer-group.com
 
+## 🚨 Emergency Contacts
+
+For a critical, actively-exploited vulnerability affecting a deployed bg-mcpcore
+server:
+
+- **📧 Primary**: security@bauer-group.com (mark the subject `URGENT SECURITY`)
+- **📈 Escalation**: the repository maintainers (see CODEOWNERS), via a GitHub
+  Security Advisory with the "critical" severity set.
+
 ---
 
 **Current Version**: v1.0.0
-**Last Updated**: 2026-06-01 13:05:04 UTC
+**Last Updated**: 2026-06-01 13:09:02 UTC
 **Next Review**: June 2027
 **Policy Version**: 1.0.0
 
