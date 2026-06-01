@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE. DO NOT EDIT. Edit docs/README.template.MD instead. -->
-<!-- Generated on 2026-06-01 12:53:32 UTC -->
+<!-- Generated on 2026-06-01 13:04:48 UTC -->
 
 # BAUER GROUP - BG-MCPCore
 
@@ -18,7 +18,7 @@ declarative profile.
 
 **Repository Information:**
 
-- **Version:** 0.0.0 (2026-06-01)
+- **Version:** v1.0.0 (2026-06-01)
 - **Repository:** [bauer-group/LIB-BG-MCPCore](https://github.com/bauer-group/LIB-BG-MCPCore)
 - **Branch:** main
 - **Architecture:** Config-driven, pluggable, secure-by-default
