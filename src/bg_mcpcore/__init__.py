@@ -75,6 +75,7 @@ _LAZY: dict[str, str] = {
     "ConstructingToolProvider": "tools",
     "ToolContext": "tools",
     "ToolProvider": "tools",
+    "UpstreamError": "tools",
     "available_tools": "tools",
     "register_tool": "tools",
 }
@@ -213,6 +214,9 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
         ToolProvider as ToolProvider,
     )
     from .tools import (
+        UpstreamError as UpstreamError,
+    )
+    from .tools import (
         available_tools as available_tools,
     )
     from .tools import (
@@ -233,6 +237,7 @@ __all__ = [
     "ToolContext",
     "ToolProvider",
     "UpstreamClient",
+    "UpstreamError",
     "__version__",
     "available_tools",
     "build_app_from_profile",

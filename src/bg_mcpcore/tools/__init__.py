@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .protocol import ConstructingToolProvider, ToolContext, ToolProvider
+from .protocol import ConstructingToolProvider, ToolContext, ToolProvider, UpstreamError
 from .registry import ToolFactory, available_tools, get_tool, register_tool
 
 __all__ = [
@@ -10,6 +10,7 @@ __all__ = [
     "ToolContext",
     "ToolFactory",
     "ToolProvider",
+    "UpstreamError",
     "available_tools",
     "get_tool",
     "register_tool",
