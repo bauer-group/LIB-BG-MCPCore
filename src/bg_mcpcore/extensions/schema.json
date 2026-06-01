@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/extensions/schema.json",
+  "$defs": {
+    "BackendCall": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "const": "GET",
+          "default": "GET",
+          "title": "Method",
+          "type": "string"
+        },
+        "path": {
+          "description": "Upstream path (relative to backend.api_base_path).",
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "BackendCall",
+      "type": "object"
+    },
+    "PromptArgumentConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Argument name and `${name}` placeholder.",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "default": "string",
+          "enum": [
+            "string",
+            "integer",
+            "number",
+            "boolean"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "PromptArgumentConfig",
+      "type": "object"
+    },
+    "PromptConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Prompt name shown to the AI client.",
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "arguments": {
+          "items": {
+            "$ref": "#/$defs/PromptArgumentConfig"
+          },
+          "title": "Arguments",
+          "type": "array"
+        },
+        "template": {
+          "description": "Body with `${name}` placeholders.",
+          "title": "Template",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "template"
+      ],
+      "title": "PromptConfig",
+      "type": "object"
+    },
+    "ResourceConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "uri": {
+          "description": "`<scheme>://...` URI; `{name}` segments make it a template.",
+          "title": "Uri",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "mime_type": {
+          "default": "application/json",
+          "title": "Mime Type",
+          "type": "string"
+        },
+        "backend": {
+          "$ref": "#/$defs/BackendCall"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "uri",
+        "name",
+        "backend"
+      ],
+      "title": "ResourceConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "prompts": {
+      "items": {
+        "$ref": "#/$defs/PromptConfig"
+      },
+      "title": "Prompts",
+      "type": "array"
+    },
+    "resources": {
+      "items": {
+        "$ref": "#/$defs/ResourceConfig"
+      },
+      "title": "Resources",
+      "type": "array"
+    }
+  },
+  "title": "ExtensionsConfig",
+  "type": "object"
+}

@@ -249,7 +249,7 @@ A full catalogue combining prompts, a static resource, and a resource template:
 ```jsonc
 // /etc/mcp/extensions.json
 {
-  "$schema": "https://schemas.bauer-group.com/mcp-extensions/v1.json",
+  "$schema": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/extensions/schema.json",
   "prompts": [
     {
       "name": "summarise_pet",
@@ -286,7 +286,7 @@ The profile that references it (a backend is present, so resources can resolve):
 
 ```jsonc
 {
-  "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+  "$schema": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json",
   "id": "petstore",
   "display_name": "BG Petstore",
   "backend": { "base_url": "https://petstore.example.com", "api_base_path": "" },

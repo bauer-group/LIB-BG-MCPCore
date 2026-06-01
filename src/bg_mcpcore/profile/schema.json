@@ -1,7 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.bauer-group.com/mcp-profile/v1.json",
-  "title": "Profile",
+  "$id": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json",
   "$defs": {
     "AuthConfig": {
       "additionalProperties": false,
@@ -291,5 +290,6 @@
     "display_name",
     "tools"
   ],
+  "title": "Profile",
   "type": "object"
 }

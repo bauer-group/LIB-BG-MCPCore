@@ -45,7 +45,7 @@ one of the first-class providers).
 ```jsonc
 // profiles/mautic.json
 {
-  "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+  "$schema": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json",
   "id": "mautic",
   "display_name": "BAUER GROUP Mautic",
   "instructions": "Marketing automation via the Mautic REST API.",

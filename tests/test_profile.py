@@ -52,7 +52,7 @@ def test_unknown_top_level_key_rejected() -> None:
 def test_schema_hint_key_is_ignored() -> None:
     # `$schema` points editors at mcp-profile/v1.json for autocompletion; the
     # loader must drop it rather than reject the profile (every example ships it).
-    over = {"$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json"}
+    over = {"$schema": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json"}
     profile = load_profile(_profile_dict(**over), env={})  # type: ignore[arg-type]
     assert profile.id == "demo"
 
@@ -64,7 +64,7 @@ def test_load_from_file_with_schema_hint(tmp_path) -> None:  # type: ignore[no-u
     path.write_text(
         json.dumps(
             {
-                "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+                "$schema": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json",
                 "id": "demo",
                 "display_name": "Demo",
                 "tools": {"source": "registry", "include": ["bg.ping"]},

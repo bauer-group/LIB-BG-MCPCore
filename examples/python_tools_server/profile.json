@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+  "$schema": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json",
   "id": "python-tools",
   "display_name": "BG Python Tools (Tier-3 / OBO demo)",
   "instructions": "Tier-3 demo: hand-written tools + a per-user on-behalf-of outbound resolver.",
