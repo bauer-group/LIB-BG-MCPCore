@@ -1,7 +1,15 @@
 {
   "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
   "id": "python-tools",
-  "display_name": "BG Python Tools (escape-hatch demo)",
-  "instructions": "Tier-3 demo: hand-written tools via the python escape hatch.",
+  "display_name": "BG Python Tools (Tier-3 / OBO demo)",
+  "instructions": "Tier-3 demo: hand-written tools + a per-user on-behalf-of outbound resolver.",
+  "backend": {
+    "base_url": "https://api.example.com",
+    "api_base_path": "/api/v1"
+  },
+  "auth": {
+    "inbound": { "mode": "none" },
+    "outbound": { "type": "python", "resolver": "my_auth:make_resolver" }
+  },
   "tools": { "source": "python", "register": "my_tools:register" }
 }

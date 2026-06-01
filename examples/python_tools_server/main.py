@@ -1,6 +1,6 @@
-"""Tier-3 server — hand-written tools via the python escape hatch.
+"""Tier-3 server — hand-written tools + a per-user on-behalf-of resolver.
 
-Run from this directory (so `my_tools` is importable):
+Run from this directory (so `my_tools` / `my_auth` are importable):
     export PUBLIC_BASE_URL=http://localhost:8000 ENVIRONMENT=development AUTH_MODE=none
     python main.py
 """

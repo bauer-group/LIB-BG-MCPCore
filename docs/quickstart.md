@@ -60,3 +60,12 @@ fields and pass it via `make_cli(profile, settings_cls=MySettings)`.
 
 The fail-closed invariants are enforced in core: `AUTH_MODE=none` is rejected in
 production, and a JWT signing key is required for any active mode.
+
+## Next steps
+
+- [Usage & configuration](usage.md) — every setting, the profile/settings split,
+  subclassing `BaseMcpSettings`, connecting an MCP client, the request lifecycle.
+- [The three tiers](tiers.md) — pick the lowest tier that fits your backend;
+  full profile + code for Tier 1 (pure config), Tier 2 (config + a little
+  Python), and Tier 3 (mostly Python).
+- [Profile reference](profiles.md) — every field of the profile schema.

@@ -26,10 +26,14 @@ theme:
 
 nav:
   - Home: index.md
-  - Quickstart: quickstart.md
-  - Profile reference: profiles.md
-  - Writing plugins: plugins.md
-  - Security model: security.md
+  - Get started:
+      - Quickstart: quickstart.md
+      - Usage & configuration: usage.md
+      - The three tiers: tiers.md
+  - Reference:
+      - Profile reference: profiles.md
+      - Writing plugins: plugins.md
+      - Security model: security.md
 
 markdown_extensions:
   - admonition
