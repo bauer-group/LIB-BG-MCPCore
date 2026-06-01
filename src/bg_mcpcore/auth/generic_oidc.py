@@ -50,8 +50,12 @@ def discover_endpoints(discovery_url: str, *, timeout: float = 10.0) -> dict[str
     return doc
 
 
-def build_generic_oidc_provider(settings: OidcSettings) -> Any:
-    """Build an OIDCProxy (discovery) or OAuthProxy (explicit endpoints)."""
+def build_generic_oidc_provider(settings: OidcSettings, inbound: Any | None = None) -> Any:
+    """Build an OIDCProxy (discovery) or OAuthProxy (explicit endpoints).
+
+    Reads its config from ``settings`` (env-driven); ``inbound`` is accepted for
+    the uniform builder contract but unused.
+    """
     from .storage import build_client_storage
 
     if not settings.oidc_client_id or not settings.oidc_client_secret:

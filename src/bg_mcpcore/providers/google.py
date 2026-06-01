@@ -14,8 +14,12 @@ from .protocols import GoogleSettings
 logger = get_logger("bg-mcpcore.auth.google")
 
 
-def build_google_provider(settings: GoogleSettings) -> Any:
-    """Return a configured GoogleProvider (entry point: google)."""
+def build_google_provider(settings: GoogleSettings, inbound: Any | None = None) -> Any:
+    """Return a configured GoogleProvider (entry point: google).
+
+    Reads its config from ``settings`` (env-driven); ``inbound`` is accepted for
+    the uniform builder contract but unused.
+    """
     from fastmcp.server.auth.providers.google import GoogleProvider
 
     from ..auth.storage import build_client_storage

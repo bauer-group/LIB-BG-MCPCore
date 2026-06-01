@@ -78,6 +78,11 @@
           "default": "none",
           "title": "Mode",
           "type": "string"
+        },
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
         }
       },
       "title": "InboundAuthConfig",

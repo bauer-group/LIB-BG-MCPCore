@@ -95,10 +95,25 @@ bg-mcpcore = "bg_mcpcore.cli:main"
 openapi = "bg_mcpcore.openapi.tool_provider:create_openapi_tool_provider"
 
 # Inbound IdP modes from the [oauth-providers] extra (FastMCP ships the providers).
+# Entra/Google read their config from settings (env); the spec-driven providers
+# below read auth.inbound.config from the profile. Generic OIDC ('oidc') is a core
+# built-in and covers any standard-OIDC IdP via discovery.
 [project.entry-points."bg_mcpcore.auth_providers"]
 entra-single = "bg_mcpcore.providers.entra:build_entra_provider"
 entra-multi = "bg_mcpcore.providers.entra:build_entra_provider"
 google = "bg_mcpcore.providers.google:build_google_provider"
+auth0 = "bg_mcpcore.providers.generic:build_auth0"
+aws-cognito = "bg_mcpcore.providers.generic:build_aws_cognito"
+clerk = "bg_mcpcore.providers.generic:build_clerk"
+descope = "bg_mcpcore.providers.generic:build_descope"
+discord = "bg_mcpcore.providers.generic:build_discord"
+github = "bg_mcpcore.providers.generic:build_github"
+keycloak = "bg_mcpcore.providers.generic:build_keycloak"
+oci = "bg_mcpcore.providers.generic:build_oci"
+propelauth = "bg_mcpcore.providers.generic:build_propelauth"
+scalekit = "bg_mcpcore.providers.generic:build_scalekit"
+supabase = "bg_mcpcore.providers.generic:build_supabase"
+workos = "bg_mcpcore.providers.generic:build_workos"
 
 # Post-auth middleware: the Entra multi-tenant allowlist gate.
 [project.entry-points."bg_mcpcore.auth_middleware"]

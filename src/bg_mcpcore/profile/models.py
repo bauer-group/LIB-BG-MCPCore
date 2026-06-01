@@ -12,6 +12,8 @@ maps, name overrides) use ``extra="allow"`` so a profile stays valid before the
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -27,9 +29,12 @@ class BackendConfig(BaseModel):
 
 class InboundAuthConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
-    # Advisory default; the authoritative inbound mode is AUTH_MODE (env), held
-    # and validated by BaseMcpSettings.
+    # `mode` is advisory; the authoritative inbound mode is AUTH_MODE (env), held
+    # and validated by BaseMcpSettings. `config` carries provider-specific params
+    # for the spec-driven IdP providers (auth0/keycloak/github/...); secrets are
+    # referenced by a `<key>_env` entry naming an env var, never inlined.
     mode: str = "none"
+    config: dict[str, Any] = Field(default_factory=dict)
 
 
 class OutboundAuthConfig(BaseModel):

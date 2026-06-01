@@ -20,8 +20,12 @@ logger = get_logger("bg-mcpcore.auth.entra")
 _OIDC_AUTHORIZE_SCOPES: tuple[str, ...] = ("openid", "profile", "email")
 
 
-def build_entra_provider(settings: EntraSettings) -> Any:
-    """Return a configured AzureProvider (entry point: entra-single / entra-multi)."""
+def build_entra_provider(settings: EntraSettings, inbound: Any | None = None) -> Any:
+    """Return a configured AzureProvider (entry point: entra-single / entra-multi).
+
+    Reads its config from ``settings`` (env-driven); ``inbound`` is accepted for
+    the uniform builder contract but unused.
+    """
     from fastmcp.server.auth.providers.azure import AzureProvider
 
     from ..auth.storage import build_client_storage

@@ -6,9 +6,33 @@ pip-installable package, never a core edit. Three groups:
 | Group | Adds | Built-ins |
 |---|---|---|
 | `bg_mcpcore.tool_sources` | a `tools.source` value | `python`, `registry`, `openapi` |
-| `bg_mcpcore.auth_providers` | an inbound `AUTH_MODE` | `none`, `oidc` |
+| `bg_mcpcore.auth_providers` | an inbound `AUTH_MODE` | `none`, `oidc` (core); `entra-single`, `entra-multi`, `google`, `auth0`, `aws-cognito`, `clerk`, `descope`, `discord`, `github`, `keycloak`, `oci`, `propelauth`, `scalekit`, `supabase`, `workos` (`[oauth-providers]`) |
+| `bg_mcpcore.auth_middleware` | post-auth gate per mode | `entra-multi` (tenant allowlist) |
 | `bg_mcpcore.auth_resolvers` | an outbound `auth.type` | `none`, `static_header`, `bearer_env`, `python` |
 | `bg_mcpcore.tools` | a named tool for `tools.source: registry` | `bg.ping`, `bg.health` |
+
+## Inbound auth providers (full FastMCP parity)
+
+`AUTH_MODE=oidc` covers any standard-OIDC IdP via discovery (Keycloak, Auth0,
+Okta, Authentik, Zitadel, Cognito, …). The dedicated modes above add first-class
+support for FastMCP's provider catalogue. `entra-*`/`google` read their config
+from settings (env); the spec-driven modes read it from the profile's
+`auth.inbound.config`, with **secrets referenced by a `<key>_env` entry** naming
+an env var (never inlined):
+
+```jsonc
+"auth": {
+  "inbound": {
+    "mode": "keycloak",                              // = AUTH_MODE
+    "config": { "realm_url": "${env:KEYCLOAK_REALM_URL}" }
+  }
+}
+// AUTH_MODE=auth0:  config: { config_url, client_id, audience, client_secret_env: "AUTH0_SECRET" }
+// AUTH_MODE=github: config: { client_id, client_secret_env: "GH_SECRET" }
+```
+
+A non-standard / proprietary IdP (e.g. Zammad-as-OAuth2, opaque tokens) is a
+custom provider registered the same way — see below.
 
 ## A new tool source
 

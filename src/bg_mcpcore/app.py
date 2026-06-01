@@ -66,7 +66,7 @@ async def build_app_from_profile(
         release=version,
     )
 
-    auth_provider = build_auth_provider(settings)
+    auth_provider = build_auth_provider(settings, profile.auth.inbound)
 
     client: UpstreamClient | None = None
     if profile.backend is not None:

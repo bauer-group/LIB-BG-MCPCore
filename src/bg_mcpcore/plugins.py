@@ -63,23 +63,31 @@ def _discover(group: str) -> dict[str, EntryPoint]:
 
 # ── Inbound auth providers ───────────────────────────────────────────────────
 
-_BUILTIN_AUTH_PROVIDERS: dict[str, Callable[[Any], Any]] = {
-    "none": lambda _settings: None,
+# Builders take (settings, inbound): cross-cutting/secret values come from
+# settings; provider-specific params come from the profile's auth.inbound.config
+# (used by the spec-driven providers; the built-ins read settings and ignore it).
+def _no_auth(_settings: Any, _inbound: Any) -> None:
+    return None
+
+
+_BUILTIN_AUTH_PROVIDERS: dict[str, Callable[[Any, Any], Any]] = {
+    "none": _no_auth,
     "oidc": build_generic_oidc_provider,
 }
 
 
-def build_auth_provider(settings: Any) -> Any:
+def build_auth_provider(settings: Any, inbound: Any | None = None) -> Any:
     """Build the inbound auth provider for ``settings.auth_mode`` (None for 'none').
 
-    Raises ProfileError on an unknown mode - the closed-set guarantee.
+    ``inbound`` is the profile's ``auth.inbound`` (carrying provider config for the
+    spec-driven IdPs). Raises ProfileError on an unknown mode - the closed set.
     """
     mode = str(settings.auth_mode)
     if mode in _BUILTIN_AUTH_PROVIDERS:
-        return _BUILTIN_AUTH_PROVIDERS[mode](settings)
+        return _BUILTIN_AUTH_PROVIDERS[mode](settings, inbound)
     eps = _discover("bg_mcpcore.auth_providers")
     if mode in eps:
-        return eps[mode].load()(settings)
+        return eps[mode].load()(settings, inbound)
     known = sorted(set(_BUILTIN_AUTH_PROVIDERS) | set(eps))
     raise ProfileError(f"Unknown AUTH_MODE '{mode}'. Known modes: {', '.join(known)}")
 
