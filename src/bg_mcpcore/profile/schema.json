@@ -52,6 +52,25 @@
       "title": "BackendConfig",
       "type": "object"
     },
+    "ExtensionsRef": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "ExtensionsRef",
+      "type": "object"
+    },
     "InboundAuthConfig": {
       "additionalProperties": true,
       "properties": {
@@ -249,6 +268,17 @@
     },
     "routes": {
       "$ref": "#/$defs/RoutesConfig"
+    },
+    "extensions": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExtensionsRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

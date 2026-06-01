@@ -67,6 +67,13 @@ class RoutesConfig(BaseModel):
     index: bool = True
 
 
+class ExtensionsRef(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source: str  # file:// URL or bare path to the extensions catalogue JSON
+    required: bool = False
+
+
 class Profile(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -79,6 +86,7 @@ class Profile(BaseModel):
     auth: AuthConfig = Field(default_factory=AuthConfig)
     tools: ToolsConfig | list[ToolsConfig]
     routes: RoutesConfig = Field(default_factory=RoutesConfig)
+    extensions: ExtensionsRef | None = None
 
     @property
     def tool_sources(self) -> list[ToolsConfig]:
@@ -88,6 +96,7 @@ class Profile(BaseModel):
 __all__ = [
     "AuthConfig",
     "BackendConfig",
+    "ExtensionsRef",
     "InboundAuthConfig",
     "OutboundAuthConfig",
     "Profile",

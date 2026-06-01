@@ -142,6 +142,17 @@ async def build_app_from_profile(
     for provider in registering:
         total += await provider.register(mcp, ctx)
 
+    # Layer config-driven prompts + resources on top of the tool surface.
+    if profile.extensions is not None:
+        from .extensions import load_extensions
+
+        load_extensions(
+            mcp,
+            config_source=profile.extensions.source,
+            client=client,
+            required=profile.extensions.required,
+        )
+
     if profile.routes.healthz:
         register_healthz_route(mcp)
     if static_dir is not None:
