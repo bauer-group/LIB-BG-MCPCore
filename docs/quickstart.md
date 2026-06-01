@@ -63,9 +63,15 @@ production, and a JWT signing key is required for any active mode.
 
 ## Next steps
 
-- [Usage & configuration](usage.md) — every setting, the profile/settings split,
-  subclassing `BaseMcpSettings`, connecting an MCP client, the request lifecycle.
+- [Core concepts](concepts.md) — the profile + settings + escape-hatch model,
+  the assembler spine, and the request lifecycle.
 - [The three tiers](tiers.md) — pick the lowest tier that fits your backend;
   full profile + code for Tier 1 (pure config), Tier 2 (config + a little
   Python), and Tier 3 (mostly Python).
-- [Profile reference](profiles.md) — every field of the profile schema.
+- [Configuration & settings](usage.md) — every setting, the profile/settings
+  split, subclassing `BaseMcpSettings`, connecting an MCP client.
+- Guides: [authentication](authentication.md), [tool sources](tools.md),
+  [extensions](extensions.md), [observability & limits](observability.md),
+  [deployment](deployment.md).
+- Reference: [profile schema](profiles.md), [writing plugins](plugins.md),
+  [security model](security.md), [API reference](api.md).

@@ -4,16 +4,62 @@ Config-driven, pluggable REST-API MCP servers on [FastMCP](https://github.com/jl
 
 bg-mcpcore is the shared foundation for BAUER GROUP's fleet of
 [Model Context Protocol](https://modelcontextprotocol.io) servers that bridge
-REST APIs. A server is described by a **declarative JSON profile**; the genuinely
-complex parts drop down to **Python escape hatches**.
+REST APIs to AI clients. A server is described by a **declarative JSON profile**;
+the genuinely complex parts drop down to small **Python escape hatches**.
 
-## Why
+!!! quote "The principle"
+    **Config for the standard, code for the complex.** Everything most servers
+    share — OAuth-gated auth, encrypted state, rate limiting, redacted logging —
+    is one audited, tested home. A new REST-API MCP server becomes a ~15-line
+    profile plus a 4-line entrypoint.
 
-The first two MCP servers (Zammad, Shlink) duplicated security-sensitive
-infrastructure — encrypted OAuth-state storage, PII log redaction, rate
-limiting, the OAuth-gated bootstrap — as drifting copies. bg-mcpcore gives that
-code one audited, tested home, and turns a new REST-API MCP server into a
-~15-line profile plus a 4-line entrypoint.
+```python
+from bg_mcpcore import load_profile, make_cli
+
+app = make_cli(load_profile("profiles/myserver.json"), version="1.0.0")
+if __name__ == "__main__":
+    app()
+```
+
+<div class="grid cards" markdown>
+
+-   :material-rocket-launch-outline:{ .lg .middle } __Fast to market__
+
+    ---
+
+    A clean OpenAPI backend becomes a complete, OAuth-protected MCP server with
+    **zero tool code** — just a profile.
+
+    [:octicons-arrow-right-24: Quickstart](quickstart.md)
+
+-   :material-layers-triple-outline:{ .lg .middle } __Three complexity tiers__
+
+    ---
+
+    Pure config, config + a little Python, or mostly Python. Pick the lowest
+    tier your backend allows — and mix freely.
+
+    [:octicons-arrow-right-24: The three tiers](tiers.md)
+
+-   :material-puzzle-outline:{ .lg .middle } __Pluggable, never forked__
+
+    ---
+
+    New auth modes, tool sources, and resolvers are pip-installable plugins via
+    Python entry points — never a core edit.
+
+    [:octicons-arrow-right-24: Writing plugins](plugins.md)
+
+-   :material-shield-lock-outline:{ .lg .middle } __Secure by default__
+
+    ---
+
+    Fail-closed auth invariants, encrypted OAuth state at rest, PII log
+    redaction, and a least-privilege tool context — enforced in core.
+
+    [:octicons-arrow-right-24: Security model](security.md)
+
+</div>
 
 ## Three complexity tiers
 
@@ -38,13 +84,37 @@ through each with a full profile + code.
 
 ## Where to go next
 
-- [Quickstart](quickstart.md) — a running server in five minutes.
-- [Usage & configuration](usage.md) — the settings/profile split, every env var,
-  running, connecting a client, the request lifecycle.
-- [The three tiers](tiers.md) — config vs. code, with a full example per tier.
-- [Profile reference](profiles.md) — every field of the profile schema.
-- [Writing plugins](plugins.md) — add auth modes, tool sources, resolvers.
-- [Security model](security.md) — the fail-closed invariants.
+<div class="grid cards" markdown>
 
-Runnable end-to-end examples for every tier live in
-[`examples/`](https://github.com/bauer-group/LIB-BG-MCPCore/tree/main/examples).
+-   __Get started__
+
+    ---
+
+    [Installation](installation.md) · [Quickstart](quickstart.md) ·
+    [Core concepts](concepts.md)
+
+-   __Guides__
+
+    ---
+
+    [The three tiers](tiers.md) · [Configuration & settings](usage.md) ·
+    [Authentication](authentication.md) · [Tool sources](tools.md) ·
+    [Extensions](extensions.md) · [Observability & limits](observability.md) ·
+    [Deployment](deployment.md)
+
+-   __Reference__
+
+    ---
+
+    [Profile schema](profiles.md) · [Writing plugins](plugins.md) ·
+    [Security model](security.md) · [API reference](api.md) ·
+    [Changelog](changelog.md)
+
+-   __Examples__
+
+    ---
+
+    Runnable servers for every tier live in
+    [`examples/`](https://github.com/bauer-group/LIB-BG-MCPCore/tree/main/examples).
+
+</div>

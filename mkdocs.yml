@@ -1,47 +1,111 @@
 site_name: bg-mcpcore
 site_description: BAUER GROUP MCP framework — config-driven, pluggable REST-API MCP servers on FastMCP
+site_author: BAUER GROUP
 repo_url: https://github.com/bauer-group/LIB-BG-MCPCore
 repo_name: bauer-group/LIB-BG-MCPCore
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; BAUER GROUP
 
 theme:
   name: material
+  language: en
   palette:
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       primary: indigo
       accent: indigo
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: indigo
       accent: indigo
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
+    - navigation.tracking
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.footer
+    - toc.follow
     - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
     - search.suggest
+    - search.highlight
+    - search.share
+  icon:
+    repo: fontawesome/brands/github
 
 nav:
   - Home: index.md
   - Get started:
+      - Installation: installation.md
       - Quickstart: quickstart.md
-      - Usage & configuration: usage.md
+      - Core concepts: concepts.md
+  - Guides:
       - The three tiers: tiers.md
+      - Configuration & settings: usage.md
+      - Authentication: authentication.md
+      - Tool sources: tools.md
+      - Extensions: extensions.md
+      - Observability & limits: observability.md
+      - Deployment: deployment.md
   - Reference:
-      - Profile reference: profiles.md
+      - Profile schema: profiles.md
       - Writing plugins: plugins.md
       - Security model: security.md
+      - API reference: api.md
+      - Changelog: changelog.md
 
 markdown_extensions:
+  - abbr
   - admonition
-  - pymdownx.highlight
-  - pymdownx.superfences
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
   - tables
   - toc:
       permalink: true
+      title: On this page
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.keys
 
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 3
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            merge_init_into_class: true
+            docstring_section_style: table
+            filters: ["!^_"]

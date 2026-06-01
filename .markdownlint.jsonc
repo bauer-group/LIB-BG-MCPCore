@@ -1,11 +1,29 @@
 {
-  // bg-mcpcore Markdown house style. Tables use compact separators (|---|) with
-  // spaced header/body pipes — accept that verbatim rather than churning every
-  // table to satisfy the default "consistent" inference.
+  // bg-mcpcore Markdown house style for the MkDocs-Material docs site.
+  // Several default rules are fundamentally incompatible with the Material
+  // features the docs rely on; disabling them is the standard practice for
+  // Material-based repositories (Material's own docs do the same).
   "default": true,
+
   // Line length: prose wraps at ~72-100, but tables and fenced code blocks
   // legitimately exceed it. The repo is not on a hard column limit.
   "MD013": false,
+
+  // Inline HTML — required for Material "grid cards" (`<div class="grid cards" markdown>`).
+  "MD033": false,
+
+  // Code-block style — Material content tabs (`=== "x"`) indent their fenced
+  // code blocks, which the "consistent" inference misreads as indented blocks.
+  "MD046": false,
+
+  // Spaces after list markers — Material grid cards use `-   ` (content at
+  // column 4) so the `---` separator + body are parsed as list-item continuation.
+  "MD030": false,
+
+  // Strong style — Material grid-card titles conventionally use `__title__`;
+  // both `__` and `**` are valid Markdown bold.
+  "MD050": false,
+
   // Accept the existing table pipe spacing (spaced header/body + compact rule).
   "MD060": { "style": "leading_and_trailing" }
 }
