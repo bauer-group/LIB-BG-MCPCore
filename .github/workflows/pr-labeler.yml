@@ -1,7 +1,26 @@
-name: 🏷️ PR Labeler
+# ─────────────────────────────────────────────────────────────────────────────
+#  PR Labeler — automatic labelling of pull requests
+# ─────────────────────────────────────────────────────────────────────────────
+#  WHAT
+#    Calls the shared BAUER GROUP `pr-labeler.yml` reusable workflow to apply
+#    labels based on changed paths, PR size, branch name, and title keywords,
+#    using the repo-local config under .github/config/pr-labeler/.
+#
+#  WHEN
+#    On PR open/edit/sync/reopen, and manually.
+#
+#  TRIGGER NOTE
+#    Uses `pull_request_target` (not `pull_request`) so the labeler has a write
+#    token even for PRs from forks. The reusable workflow only reads PR metadata
+#    and applies labels — it does NOT check out or run untrusted PR code, which
+#    is what makes `pull_request_target` safe here.
+#
+#  PERMISSIONS
+#    contents: read        — read the config + changed-file list
+#    pull-requests: write  — apply labels
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Automatically labels pull requests based on content, size, and type.
-# Uses the modular PR labeler from the Bauer Group automation templates.
+name: 🏷️ PR Labeler
 
 on:
   pull_request_target:
@@ -13,7 +32,7 @@ on:
         type: string
         required: false
       force-update:
-        description: "Force update labels even if already labeled"
+        description: "Re-apply labels even if already labelled"
         type: boolean
         default: false
 
@@ -27,11 +46,11 @@ jobs:
     if: github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch'
     uses: bauer-group/automation-templates/.github/workflows/pr-labeler.yml@main
     with:
-      config-path: ".github/config/pr-labeler/path-labels.yml"
-      sync-labels: true
-      size-labels: true
-      priority-labels: true
-      type-labels: true
-      auto-assign: false
-      custom-rules: ".github/config/pr-labeler/triage-rules.yml"
+      config-path: ".github/config/pr-labeler/path-labels.yml"   # path/size/branch/title rules
+      sync-labels: true                                          # remove labels no longer applicable
+      size-labels: true                                          # xs..xxl by lines changed
+      priority-labels: true                                      # from keywords / touched paths
+      type-labels: true                                          # from branch name + PR title
+      auto-assign: false                                         # reviewer assignment handled by CODEOWNERS
+      custom-rules: ".github/config/pr-labeler/triage-rules.yml" # advanced priority/type/component rules
     secrets: inherit

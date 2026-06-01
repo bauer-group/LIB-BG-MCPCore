@@ -1,6 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  CI/CD Pipeline — automatic semantic release
+# ─────────────────────────────────────────────────────────────────────────────
+#  WHAT
+#    Delegates the whole release pipeline to the shared BAUER GROUP reusable
+#    workflow `python-semantic-release.yml`, which (per its inputs below):
+#      1. runs the test suite,
+#      2. runs the security/secret scan,
+#      3. computes the next version from Conventional Commits since the last tag,
+#      4. updates the version + CHANGELOG, tags, and creates the GitHub release,
+#      5. builds the wheel/sdist and publishes to PyPI (unless skipped).
+#    A PR run validates only (no version bump / no publish).
+#
+#  WHEN
+#    On push to main (non-doc, non-CI changes), on PRs to main (validate-only),
+#    and manually (with an optional "GitHub release only, skip PyPI" toggle).
+#
+#  REQUIREMENTS
+#    Org/repo secrets consumed by the reusable workflow (PyPI publish token,
+#    secret-scan engine credentials) are passed through via `secrets: inherit`.
+#
+#  PERMISSIONS
+#    The reusable workflow declares the write scopes it needs (contents for the
+#    tag/release, etc.) on its own jobs; this caller grants them via inherit.
+# ─────────────────────────────────────────────────────────────────────────────
+
 name: 🐍 CI/CD Pipeline (Automatic Release)
 
 on:
+  # Release on every functional change merged to main. CI- and doc-only edits
+  # never change the published artifact, so they don't trigger a release run.
   push:
     branches: [main]
     paths-ignore:
@@ -8,6 +36,7 @@ on:
       - 'docs/**'
       - '*.md'
       - '*.MD'
+  # Validate-only on PRs (the reusable workflow does not publish on pull_request).
   pull_request:
     branches: [main]
     paths-ignore:
@@ -15,10 +44,11 @@ on:
       - 'docs/**'
       - '*.md'
       - '*.MD'
+  # Manual trigger, e.g. to cut a GitHub release without pushing to PyPI.
   workflow_dispatch:
     inputs:
       skip-pypi:
-        description: 'Skip PyPI publishing (GitHub release only)'
+        description: 'Skip PyPI publishing (create the GitHub release only)'
         type: boolean
         default: false
 
@@ -27,10 +57,11 @@ jobs:
     name: 🐍 Python Semantic Release Pipeline
     uses: bauer-group/automation-templates/.github/workflows/python-semantic-release.yml@main
     with:
-      python-version: '3.14'
-      run-tests: true
-      run-security-scan: true
-      security-engine: 'both'
-      build-local-wheel: true
+      python-version: '3.14'          # bg-mcpcore targets 3.14 (requires-python >= 3.14)
+      run-tests: true                 # re-run the suite at publish time
+      run-security-scan: true         # gitleaks/GitGuardian secret scan
+      security-engine: 'both'         # run both scanners (org standard)
+      build-local-wheel: true         # build wheel + sdist before publishing
       skip-pypi: ${{ inputs.skip-pypi || false }}
+    # Pass org/repo secrets (PyPI token, scan credentials) to the reusable workflow.
     secrets: inherit

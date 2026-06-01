@@ -1,3 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Security Management — generate SECURITY.MD from its template
+# ─────────────────────────────────────────────────────────────────────────────
+#  WHAT
+#    Calls the shared BAUER GROUP `security-management.yml` reusable workflow,
+#    which renders docs/SECURITY.template.MD into the published SECURITY.MD —
+#    expanding the version/date placeholders ({{CURRENT_VERSION}},
+#    {{SUPPORTED_VERSIONS_TABLE}}, {{LAST_UPDATED}}, …) from the repo/tag context.
+#
+#  WHEN
+#    When the template changes (push/PR to main touching it), manually, and on
+#    release (via workflow_call from the release pipeline, which passes the tag).
+#
+#  PERMISSIONS
+#    contents: write       — commit the regenerated SECURITY.MD
+#    pull-requests: write  — open/update a PR with the change when applicable
+# ─────────────────────────────────────────────────────────────────────────────
+
 name: 🔒 Security Management
 
 on:
@@ -12,18 +30,20 @@ on:
   workflow_dispatch:
     inputs:
       force-update:
-        description: "Force security policy update even without changes"
+        description: "Regenerate even when the template is unchanged"
         type: boolean
         default: false
+  # Invoked by the release pipeline so the policy's version/date stay in sync
+  # with each published release.
   workflow_call:
     inputs:
       tag-name:
-        description: "Tag name that triggered the security policy update"
+        description: "Tag that triggered the update"
         type: string
         required: false
         default: ""
       force-update:
-        description: "Force security policy update even without changes"
+        description: "Regenerate even when the template is unchanged"
         type: boolean
         required: false
         default: false

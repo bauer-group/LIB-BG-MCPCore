@@ -1,3 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Documentation — generate README.MD from its template
+# ─────────────────────────────────────────────────────────────────────────────
+#  WHAT
+#    Calls the shared BAUER GROUP `documentation.yml` reusable workflow, which
+#    renders docs/README.template.MD into the published README.MD — expanding
+#    the placeholders ({{COMPANY_NAME}}, {{VERSION}}, {{DATE}}, {{REPO_URL}},
+#    {{CURRENT_BRANCH}}, …) from the repo/tag context. README.template.MD is the
+#    source of truth; README.MD is generated and should not be hand-edited.
+#
+#  WHEN
+#    When the template changes (push/PR to main touching it), manually, and on
+#    release (workflow_call from the release pipeline, which passes the tag).
+#
+#  PERMISSIONS
+#    contents: write       — commit the regenerated README.MD
+#    pull-requests: write  — open/update a PR with the change when applicable
+# ─────────────────────────────────────────────────────────────────────────────
+
 name: 📄 Documentation
 
 on:
@@ -12,18 +31,18 @@ on:
   workflow_dispatch:
     inputs:
       force-update:
-        description: "Force README update even without changes"
+        description: "Regenerate even when the template is unchanged"
         type: boolean
         default: false
   workflow_call:
     inputs:
       tag-name:
-        description: "Tag name that triggered the documentation update"
+        description: "Tag that triggered the update"
         type: string
         required: false
         default: ""
       force-update:
-        description: "Force README update even without changes"
+        description: "Regenerate even when the template is unchanged"
         type: boolean
         required: false
         default: false

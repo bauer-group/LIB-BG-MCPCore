@@ -1,31 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Tests — pull-request and main-branch quality gate
+# ─────────────────────────────────────────────────────────────────────────────
+#  WHAT
+#    Runs the same gate developers run locally (ruff + mypy --strict + pytest)
+#    and verifies the package installs cleanly with each optional extra in
+#    isolation. This is the PR-time gate; the release pipeline
+#    (python-automatic-release.yml) re-runs tests at publish time.
+#
+#  WHEN
+#    On every PR to main, on direct pushes to main (docs-only changes excluded),
+#    manually, and when called by another workflow (workflow_call).
+#
+#  PRODUCES
+#    Pass/fail status checks only. No artifacts, no deployment, no secrets.
+#
+#  REQUIREMENTS
+#    None. Read-only repository access; no secrets consumed.
+# ─────────────────────────────────────────────────────────────────────────────
+
 name: 🧪 Tests
 
 on:
+  # Validate every change targeting main before it merges.
+  pull_request:
+    branches: [main]
+  # Catch anything that lands on main directly. Skip doc-only edits — they
+  # cannot affect the test outcome and the release pipeline ignores them too.
   push:
     branches: [main]
     paths-ignore:
       - 'docs/**'
       - '*.md'
       - '*.MD'
-  pull_request:
-    branches: [main]
+  # Allow manual re-runs from the Actions tab.
   workflow_dispatch:
+  # Allow other workflows (e.g. a release pipeline) to invoke this gate.
   workflow_call:
 
+# Least privilege: this workflow only reads the checked-out source. No write
+# scopes are granted (never rely on the repository default token scope).
+permissions:
+  contents: read
+
+# Supersede in-flight runs for the same ref — a new push to a PR cancels the
+# previous, now-stale run instead of wasting a runner.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # ── Primary gate: lint, type-check, and unit tests on the supported runtime ──
   quality:
     name: 🔍 Lint, type-check, unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
+      # bg-mcpcore targets Python 3.14 exclusively (requires-python >= 3.14).
       - name: 🐍 Set up Python 3.14
         uses: actions/setup-python@v6
         with:
           python-version: '3.14'
 
-      - name: 📦 Cache pip
+      # Cache the pip download directory, keyed on the dependency manifest, so
+      # green builds reinstall from cache instead of re-downloading every run.
+      - name: 📦 Cache pip downloads
         uses: actions/cache@v5
         with:
           path: ~/.cache/pip
@@ -33,25 +74,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      # Editable install with the dev tooling + the [openapi] extra, so the full
+      # source tree (including the OpenAPI tool source) is exercised.
       - name: ⚙️ Install (dev + openapi)
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev,openapi]"
 
-      - name: 🎨 Ruff
+      - name: 🎨 Lint (ruff)
         run: ruff check src tests
 
-      - name: 🔍 Mypy (strict)
+      - name: 🔍 Type-check (mypy --strict)
         run: mypy src/bg_mcpcore
 
-      - name: 🧪 Pytest
+      - name: 🧪 Unit tests (pytest)
         run: pytest -q
 
+  # ── Isolation gate: prove the mandatory core imports with ONLY each single ──
+  # extra installed. Catches an accidental hard import of an optional dependency
+  # from core (the whole point of the extras split).
   validate-extras:
     name: 📦 Validate extra [${{ matrix.extra }}]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: quality
     strategy:
+      # One independent extra per job; a failure in one does not mask the others.
+      fail-fast: false
       matrix:
         extra: ["openapi", "redis", "oauth-providers", "tasks", "testkit"]
     steps:
@@ -63,13 +112,15 @@ jobs:
         with:
           python-version: '3.14'
 
-      - name: 📦 Install base + extra
+      - name: 📦 Install base, then ONLY this extra
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           pip install -e ".[${{ matrix.extra }}]"
 
-      - name: ✅ Verify the core imports with only this extra present
+      # The public API must import with any single extra present (and, by
+      # extension, with none beyond core) — no extra may be a hidden hard dep.
+      - name: ✅ Verify the public API imports
         run: |
           python -c "import bg_mcpcore; print('core', bg_mcpcore.__version__)"
           python -c "from bg_mcpcore import build_app_from_profile, load_profile, make_cli; print('public API ok')"
