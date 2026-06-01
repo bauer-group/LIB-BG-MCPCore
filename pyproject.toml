@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "BAUER GROUP MCP framework — config-driven, pluggable REST-API MCP servers on FastMCP"
 readme = "README.MD"
 license = "MIT"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 authors = [
     {name = "BAUER GROUP (Karl Bauer)", email = "karl.bauer@bauer-group.com"},
 ]
@@ -22,6 +22,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -192,7 +194,9 @@ show_missing = true
 skip_covered = false
 
 [tool.ruff]
-target-version = "py314"
+# Lint against the FLOOR of the supported range so we never use syntax newer
+# than Python 3.12 (the minimum we ship).
+target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
@@ -200,7 +204,8 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["E501"]
 
 [tool.mypy]
-python_version = "3.14"
+# Type-check against the minimum supported version.
+python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_configs = true

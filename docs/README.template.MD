@@ -54,9 +54,31 @@ if __name__ == "__main__":
 
 ## Install
 
+Requires **Python 3.12, 3.13, or 3.14**.
+
+### From PyPI
+
 ```bash
-pip install bg-mcpcore                                          # lean core
-pip install "bg-mcpcore[openapi]"                               # + OpenAPI tools
+pip install bg-mcpcore
+```
+
+### Directly from GitHub
+
+```bash
+# Latest from main
+pip install git+{{REPO_URL}}.git@main
+
+# A specific released version/tag
+pip install git+{{REPO_URL}}.git@v{{VERSION}}
+
+# With extras (any install method)
+pip install "bg-mcpcore[openapi] @ git+{{REPO_URL}}.git@main"
+```
+
+### Optional extras
+
+```bash
+pip install "bg-mcpcore[openapi]"                               # + OpenAPI-derived tools
 pip install "bg-mcpcore[openapi,redis,tasks,oauth-providers]"   # full Shlink-shaped server
 ```
 
@@ -64,7 +86,7 @@ pip install "bg-mcpcore[openapi,redis,tasks,oauth-providers]"   # full Shlink-sh
 |---|---|
 | `openapi` | `tools.source: "openapi"` — generate the tool surface from an OpenAPI spec |
 | `redis` | Redis-backed encrypted OAuth-state store (multi-replica deployments) |
-| `oauth-providers` | Entra / Google inbound IdP modes |
+| `oauth-providers` | Entra / Google + the spec-driven IdP modes (Auth0, Keycloak, GitHub, AWS Cognito, WorkOS, …) |
 | `tasks` | long-running task execution (bulk exports) |
 | `testkit` | reusable pytest fixtures + stubs (pytest11 plugin) |
 

@@ -49,30 +49,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── Primary gate: lint, type-check, and unit tests on the supported runtime ──
+  # ── Primary gate: lint, type-check, and unit tests across the supported range ─
   quality:
-    name: 🔍 Lint, type-check, unit tests
+    name: 🔍 Lint, type-check, unit tests (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      # The full supported range: floor (3.12), mid (3.13), ceiling (3.14).
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
-      # bg-mcpcore targets Python 3.14 exclusively (requires-python >= 3.14).
-      - name: 🐍 Set up Python 3.14
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: ${{ matrix.python-version }}
 
-      # Cache the pip download directory, keyed on the dependency manifest, so
+      # Cache the pip download directory, keyed on the version + manifest, so
       # green builds reinstall from cache instead of re-downloading every run.
       - name: 📦 Cache pip downloads
         uses: actions/cache@v5
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-py${{ matrix.python-version }}-pip-
 
       # Editable install with the dev tooling + the [openapi] extra, so the full
       # source tree (including the OpenAPI tool source) is exercised.
@@ -107,10 +111,12 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
-      - name: 🐍 Set up Python 3.14
+      # Run on the floor (3.12): the version most likely to surface an extra
+      # dependency that does not support the minimum we ship.
+      - name: 🐍 Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: '3.12'
 
       - name: 📦 Install base, then ONLY this extra
         run: |
