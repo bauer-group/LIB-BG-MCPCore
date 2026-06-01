@@ -12,7 +12,9 @@ annotation objects at decoration time.)
 """
 
 import asyncio
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -29,8 +31,17 @@ def make_cli(
     settings_cls: type[BaseMcpSettings] = BaseMcpSettings,
     version: str = "0.0.0",
     static_dir: str | Path | None = None,
+    lifespan: Any | None = None,
+    extra_sensitive_fragments: Sequence[str] = (),
+    extra_middleware: Sequence[Any] = (),
 ) -> typer.Typer:
-    """Build a Typer app exposing ``serve`` (default) for a profile-driven server."""
+    """Build a Typer app exposing ``serve`` (default) for a profile-driven server.
+
+    ``lifespan``, ``extra_sensitive_fragments`` and ``extra_middleware`` are passed
+    straight through to :func:`build_app_from_profile`, so a server can wire a
+    Tier-3 access-control gate (e.g. a role-allowlist middleware) without bypassing
+    ``make_cli``.
+    """
     patch_dual_stack_socket()
     cli = typer.Typer(
         name=profile.id,
@@ -63,7 +74,13 @@ def make_cli(
 
         async def _run() -> None:
             mcp = await build_app_from_profile(
-                profile, settings, version=version, static_dir=static_dir
+                profile,
+                settings,
+                version=version,
+                static_dir=static_dir,
+                lifespan=lifespan,
+                extra_sensitive_fragments=extra_sensitive_fragments,
+                extra_middleware=extra_middleware,
             )
             await run_transport(
                 mcp, host=settings.mcp_host, port=settings.mcp_port, transport=chosen

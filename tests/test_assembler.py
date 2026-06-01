@@ -35,6 +35,32 @@ async def test_registry_profile_assembles_and_registers_tools() -> None:
     assert "ping" in names
 
 
+def test_make_cli_forwards_passthrough_kwargs() -> None:
+    # Regression: make_cli must accept and forward lifespan /
+    # extra_sensitive_fragments / extra_middleware to build_app_from_profile
+    # (the documented Tier-3 access-control seam) rather than raise TypeError.
+    import typer
+
+    from bg_mcpcore import make_cli
+
+    profile = load_profile(
+        {
+            "id": "demo",
+            "display_name": "Demo",
+            "tools": {"source": "registry", "include": ["bg.ping"]},
+        },
+        env={},
+    )
+    cli = make_cli(
+        profile,
+        version="1.0.0",
+        lifespan=None,
+        extra_sensitive_fragments=["x-secret"],
+        extra_middleware=[object()],
+    )
+    assert isinstance(cli, typer.Typer)
+
+
 @pytest.mark.asyncio
 async def test_python_tool_source_escape_hatch() -> None:
     # The 'python' source imports a dotted register callable - here a built-in
