@@ -1,3 +1,7 @@
+---
+icon: material/history
+---
+
 # Changelog
 
 Releases are cut automatically by
@@ -13,7 +17,7 @@ Releases are cut automatically by
 Each published version updates the package, the git tag (`vX.Y.Z`), and the
 PyPI release in one pipeline run.
 
-## Full history
+## :material-history:  Full history
 
 The complete, version-by-version history lives in
 [`CHANGELOG.md`](https://github.com/bauer-group/LIB-BG-MCPCore/blob/main/CHANGELOG.md)

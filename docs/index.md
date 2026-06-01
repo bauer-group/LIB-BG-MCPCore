@@ -1,3 +1,7 @@
+---
+icon: material/home-variant
+---
+
 # bg-mcpcore
 
 Config-driven, pluggable REST-API MCP servers on [FastMCP](https://github.com/jlowin/fastmcp).
@@ -61,7 +65,7 @@ if __name__ == "__main__":
 
 </div>
 
-## Three complexity tiers
+## :material-layers-triple:  Three complexity tiers
 
 Pick the lowest tier that fits your backend — the [tier guide](tiers.md) walks
 through each with a full profile + code.
@@ -72,7 +76,7 @@ through each with a full profile + code.
 | [**2 — config + a little Python**](tiers.md#tier-2-config-a-little-python) | OpenAPI base + a few hand tools, or a custom resolver | profile + a `python` source/resolver reference |
 | [**3 — mostly Python**](tiers.md#tier-3-mostly-python) | no usable spec (e.g. Zammad) | `tools.source: python`; the profile still drives auth, rate-limit, identity, routes |
 
-## Design pillars
+## :material-pillar:  Design pillars
 
 - **Modular** — new auth modes / tool sources / resolvers are pip-installable
   plugins registered via Python entry points, never core edits.
@@ -82,7 +86,7 @@ through each with a full profile + code.
 - **Secure** — fail-closed auth invariants are enforced in core and a profile
   cannot switch them off.
 
-## Where to go next
+## :material-arrow-right-circle:  Where to go next
 
 <div class="grid cards" markdown>
 

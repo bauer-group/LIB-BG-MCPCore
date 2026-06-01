@@ -1,3 +1,7 @@
+---
+icon: material/power-plug
+---
+
 # Writing plugins
 
 bg-mcpcore is extended through Python **entry points** — a new capability is a
@@ -16,7 +20,7 @@ The built-ins listed above are hardcoded in core (the one exception is the
 extra). The entry-point group is the seam by which a **third-party** package adds
 *more* — you do not need to declare the built-ins anywhere.
 
-## Inbound auth providers (full FastMCP parity)
+## :material-key:  Inbound auth providers (full FastMCP parity)
 
 `AUTH_MODE=oidc` covers any standard-OIDC IdP via discovery (Keycloak, Auth0,
 Okta, Authentik, Zitadel, Cognito, …). The dedicated modes above add first-class
@@ -39,7 +43,7 @@ an env var (never inlined):
 A non-standard / proprietary IdP (e.g. Zammad-as-OAuth2, opaque tokens) is a
 custom provider registered the same way — see below.
 
-## A new tool source
+## :material-wrench:  A new tool source
 
 ```python
 # my_pkg/graphql.py
@@ -65,7 +69,7 @@ add tools to an existing instance, or **`ConstructingToolProvider`**
 (`async construct(*, name, instructions, auth, lifespan, icon_url, website_url, ctx) -> FastMCP`)
 to build the instance itself (as the OpenAPI source does via `from_openapi`).
 
-## A new auth provider / resolver
+## :material-lock:  A new auth provider / resolver
 
 ```python
 def build_my_idp(settings): ...        # -> a FastMCP auth provider (or None)
@@ -80,7 +84,7 @@ my-idp = "my_pkg.auth:build_my_idp"
 sigv4 = "my_pkg.auth:build_my_resolver"
 ```
 
-## A reusable registry tool
+## :material-format-list-bulleted:  A reusable registry tool
 
 ```python
 def register(mcp, ctx) -> None:

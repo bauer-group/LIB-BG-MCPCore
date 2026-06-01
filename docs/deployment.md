@@ -1,10 +1,14 @@
+---
+icon: material/server-network
+---
+
 # Deployment
 
 This guide covers running a `bg-mcpcore` server in production: choosing a transport, persisting the encrypted OAuth-state store, the environment a real deployment requires, reverse-proxy placement, health checks, and horizontal scaling.
 
 For local setup and the dependency model see [installation](installation.md); for the profile and settings reference see [configuration](usage.md); for inbound identity providers see [authentication](authentication.md); for rate limiting and Sentry see [observability & limits](observability.md); for the trust boundaries see [security model](security.md).
 
-## 1. Install for production
+## :material-package-variant:  1. Install for production
 
 `bg-mcpcore` ships a lean mandatory core and pushes volatile or single-consumer dependencies into extras, so a server pays only for what it imports. The core already includes FastMCP, Pydantic, structlog, `cryptography`, Typer, and the **disk-backed** encrypted OAuth state store (`py-key-value-aio[disk]`).
 
@@ -31,7 +35,7 @@ For local setup and the dependency model see [installation](installation.md); fo
 
 `bg-mcpcore` requires **Python 3.12+** and is tested and classified for **3.12, 3.13, and 3.14**. Lint and type-checks target the 3.12 floor, so nothing in the package uses syntax newer than 3.12.
 
-## 2. Required environment for a real deployment
+## :material-cog:  2. Required environment for a real deployment
 
 Environment variables map **1:1 to snake_case field names** — there is no env prefix — so `public_base_url` is set via `PUBLIC_BASE_URL`, `auth_jwt_signing_key` via `AUTH_JWT_SIGNING_KEY`, and so on. Settings load from the process environment and from a `.env` file (UTF-8, case-insensitive keys); unknown keys are ignored.
 
@@ -95,7 +99,7 @@ MCP_PORT=8000
 RATE_LIMITER_TRUSTED_PROXY_HOPS=1            # number of proxies in front
 ```
 
-## 3. Transports
+## :material-transit-connection-variant:  3. Transports
 
 `bg-mcpcore` supports two MCP transports, selected by `MCP_TRANSPORT` (default `streamable-http`):
 
@@ -122,7 +126,7 @@ your-mcp-server serve --host 0.0.0.0 --port 9000 --transport streamable-http
 
 The flags override `MCP_HOST`, `MCP_PORT`, and `MCP_TRANSPORT` respectively for that invocation; absent flags fall back to the environment.
 
-## 4. OAuth-state persistence (critical)
+## :material-database:  4. OAuth-state persistence (critical) { #4-oauth-state-persistence-critical }
 
 FastMCP's OAuth providers persist five classes of server-side state: DCR client metadata, authorization codes + PKCE challenges, refresh-token-hash → upstream-token mappings, issued-JWT-JTI → upstream-token mappings, and in-flight OAuth transactions. Without an explicit store, FastMCP falls back to a `DiskStore` under `platformdirs.user_data_dir()` — which **inside a container is ephemeral**, so every restart wipes all of it and logs every user out.
 
@@ -155,13 +159,13 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 !!! note "Redis URLs are sanitised in logs"
     Credentials in `AUTH_REDIS_URL` (`redis://user:pass@host:6379/0`) are stripped before the URL is logged (`redis://***@host:6379/0`), so no Redis password leaks into structured logs.
 
-## 5. Health checks
+## :material-heart-pulse:  5. Health checks { #5-health-checks }
 
 The server mounts **`/healthz`**, which returns `200 OK` (`{"status": "ok"}`) as soon as the process is up. It is **unauthenticated** — it sits in front of the OAuth wall specifically so container and Kubernetes liveness/readiness probes can reach it without credentials. Point your container `HEALTHCHECK` and any k8s `livenessProbe` / `readinessProbe` at `/healthz`.
 
 The server also serves `/logo.svg` and a human-readable status page at `/` from the configured `static_dir` (when those routes are enabled in the profile). The upstream backend's own health endpoint, if any, remains behind the OAuth wall and is not the same thing as `/healthz`.
 
-## 6. Reverse proxy
+## :material-router-network:  6. Reverse proxy
 
 In production, terminate TLS at a reverse proxy (nginx, Traefik, Caddy, a cloud load balancer) and forward plain HTTP to the server's `MCP_PORT`. The proxy should:
 
@@ -182,7 +186,7 @@ location / {
 }
 ```
 
-## 7. Containerisation
+## :material-docker:  7. Containerisation
 
 `bg-mcpcore` has no Dockerfile of its own (it is a library); a server that depends on it builds its own image. The following is a representative, production-credible Dockerfile grounded in the package — a supported Python base, an install with the recommended extras, the listen port exposed, a healthcheck hitting `/healthz`, and the disk-storage path declared as a volume.
 

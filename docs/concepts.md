@@ -1,10 +1,14 @@
+---
+icon: material/lightbulb-on
+---
+
 # Core concepts
 
 This page is the mental model behind every bg-mcpcore server: the three inputs
 that assemble one, the fixed pipeline that wires them, what happens on each
 request, and the design rules that keep the core small while the fleet grows.
 
-## Why bg-mcpcore exists
+## :material-information-outline:  Why bg-mcpcore exists
 
 BAUER GROUP runs a fleet of [Model Context Protocol](https://modelcontextprotocol.io)
 servers that each front a REST API (Zammad, Shlink, and more). The first two
@@ -20,7 +24,7 @@ guiding principle is one line:
     profile. The parts that genuinely differ between backends drop down to small
     Python **escape hatches** the profile points at — never a core edit.
 
-## The three inputs
+## :material-vector-combine:  The three inputs
 
 A server is assembled from two declared inputs plus optional Python:
 
@@ -54,7 +58,7 @@ if __name__ == "__main__":
     app()
 ```
 
-## The complexity tiers
+## :material-layers-triple:  The complexity tiers
 
 How much Python a server needs falls into three tiers — pick the lowest that
 fits your backend. The [tier guide](tiers.md) walks each with a full example.
@@ -69,7 +73,7 @@ Tiers are not exclusive: one profile can combine an OpenAPI surface with a few
 hand-written tools and a per-user resolver. You start at the lowest tier and add
 code only where the backend forces it.
 
-## The assembler spine
+## :material-pipe:  The assembler spine
 
 `build_app_from_profile` runs a **fixed pipeline** with hook seams for the parts
 that genuinely differ. The order is deliberate:
@@ -96,7 +100,7 @@ Two forks live on this spine:
 - **Inbound auth is a closed set** ([authentication](authentication.md)). An
   unknown `AUTH_MODE` raises rather than silently booting unauthenticated.
 
-## The request lifecycle
+## :material-sync:  The request lifecycle
 
 What the framework does on each inbound MCP call:
 
@@ -117,7 +121,7 @@ caller's identity reaches the backend is an explicit on-behalf-of outbound
 resolver that resolves it per call (and fails closed when it can't) — see
 [authentication](authentication.md).
 
-## Least privilege: the ToolContext
+## :material-shield-account:  Least privilege: the ToolContext
 
 Tool sources receive a `ToolContext`, but not all the same one. The server's own
 trusted code (the `python` escape hatch) gets the **full** context, including
@@ -126,7 +130,7 @@ sources get a **settings-less** context — an authenticated `client` and a logg
 but `settings = None`. This boundary is enforced by the assembler, not merely
 documented. See the [security model](security.md).
 
-## Modularity: new capability = config or a plugin, never a core edit
+## :material-power-plug:  Modularity: new capability = config or a plugin, never a core edit
 
 The core stays small and stable; everything extensible hangs off versioned
 seams — Python **entry points**, the same mechanism pytest uses:
@@ -142,7 +146,7 @@ seams — Python **entry points**, the same mechanism pytest uses:
 A new IdP, tool protocol, or credential scheme is a **pip-installable plugin** —
 it never requires changing `bg-mcpcore`. See [writing plugins](plugins.md).
 
-## Stability & the FastMCP coupling
+## :material-link-lock:  Stability & the FastMCP coupling
 
 The mandatory core binds to a few private FastMCP symbols (e.g. the storage
 key-derivation `derive_jwt_key`). A security regression test guards that
@@ -151,7 +155,7 @@ invalidating every deployed OAuth session. Volatile concerns (OpenAPI tooling,
 Azure, Redis, docket) are isolated in optional extras, so a churn there cannot
 destabilise core.
 
-## Where to go next
+## :material-arrow-right-circle:  Where to go next
 
 - [Installation](installation.md) · [Quickstart](quickstart.md)
 - [The three tiers](tiers.md) — config vs. code, with a full example per tier

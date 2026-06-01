@@ -1,9 +1,13 @@
+---
+icon: material/shield-lock
+---
+
 # Security model
 
 bg-mcpcore enforces invariants that every downstream server inherits and cannot
 relax. They were shaped by an adversarial security review during the design.
 
-## Fail-closed auth (core-enforced)
+## :material-shield-lock:  Fail-closed auth (core-enforced)
 
 `BaseMcpSettings` runs these BEFORE a subclass's per-mode checks:
 
@@ -16,13 +20,13 @@ relax. They were shaped by an adversarial security review during the design.
 A subclass adds per-mode credential checks via `validate_provider_auth()`; it
 cannot remove the above.
 
-## Closed-set auth modes
+## :material-shield-check:  Closed-set auth modes
 
 `build_auth_provider` raises on an unknown `AUTH_MODE` rather than silently
 serving an unauthenticated endpoint. New modes are added by registering an
 entry-point plugin, not by accepting arbitrary strings.
 
-## Multi-tenant Entra needs a tenant allowlist
+## :material-account-multiple-check:  Multi-tenant Entra needs a tenant allowlist
 
 `AUTH_MODE=entra-multi` validates a token's signature against Microsoft's
 multi-tenant JWKS but does **not** by itself check which tenant issued it — that
@@ -34,14 +38,14 @@ so it is never shipped unknowingly. Set `ENTRA_ALLOWED_TENANTS` to restrict
 access to your own tenant(s). (`entra-single` is bound to one `ENTRA_TENANT_ID`
 and needs no allowlist.)
 
-## Secrets never live in profiles
+## :material-key-variant:  Secrets never live in profiles
 
 Profiles reference secrets by env-var name (`value_from_env`) or interpolate
 non-secret config (`${env:VAR}`). The loader fails closed if a referenced
 variable is unset, and credentials are never pulled into the parsed profile
 object.
 
-## Encrypted OAuth state at rest
+## :material-database-lock:  Encrypted OAuth state at rest
 
 DCR/token state is Fernet-encrypted (Redis or disk backend). The disk key is
 derived from `AUTH_JWT_SIGNING_KEY` via HKDF with a fixed salt, so it is
@@ -54,7 +58,7 @@ else the encrypted files themselves vanish on restart regardless of the key.
 Redis mode **warns** when the storage key reuses the JWT signing key — use a
 dedicated `AUTH_STORAGE_ENCRYPTION_KEY`.
 
-## Outbound auth is fail-closed
+## :material-lock:  Outbound auth is fail-closed
 
 The `AuthHeaderSource` contract splits static credentials (`default_headers()`,
 applied once at client construction) from per-call credentials
@@ -63,21 +67,21 @@ resolver that cannot produce a credential **raises** rather than letting the
 request inherit a static default. The credential-bearing client is not exposed
 to spec-driven providers as a public attribute.
 
-## Least-privilege tool context
+## :material-shield-account:  Least-privilege tool context
 
 Spec-driven / registry tool sources receive a capability-scoped `ToolContext`
 (an authenticated `client` + logger), never the full settings object that holds
 `SecretStr` fields. Only the `python` escape hatch — the server's own trusted
 code — receives `settings`.
 
-## Log redaction
+## :material-eye-off:  Log redaction
 
 A structured-logging processor masks values under sensitive-looking keys
 (token, secret, authorization, x-api-key, …). Servers extend the fragment list
 additively via `setup_logging(extra_sensitive_fragments=...)` for backend-specific
 secret field names.
 
-## FastMCP-version coupling
+## :material-link-lock:  FastMCP-version coupling
 
 The core pins FastMCP for the fleet and binds to a few private FastMCP symbols
 (e.g. `derive_jwt_key`). A security regression test guards the storage

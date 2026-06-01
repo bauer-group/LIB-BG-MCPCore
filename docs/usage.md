@@ -1,9 +1,13 @@
+---
+icon: material/cog
+---
+
 # Usage & configuration
 
 This page is the depth behind the [Quickstart](quickstart.md): how configuration
 is split, every setting, how to run a server, and how a request flows.
 
-## The mental model: profile + settings + escape hatches
+## :material-lightbulb-on:  The mental model: profile + settings + escape hatches
 
 A bg-mcpcore server is assembled from two inputs, plus optional Python:
 
@@ -20,7 +24,7 @@ Python.** Secrets never go in the profile — they are referenced by env-var nam
 `build_app_from_profile(profile, settings)` wires them together. `make_cli` wraps
 that in a Typer CLI so a server's `main.py` is four lines.
 
-## Settings reference (environment variables)
+## :material-cog:  Settings reference (environment variables)
 
 `BaseMcpSettings` reads these from the environment (`.env` is loaded too). Names
 map 1:1 to upper-snake env vars (`public_base_url` ← `PUBLIC_BASE_URL`).
@@ -78,7 +82,7 @@ The **fail-closed invariants** are enforced in core and cannot be relaxed:
 any active mode, and `AUTH_REDIS_URL` requires a valid storage key. See the
 [security model](security.md).
 
-## Adding backend-specific settings
+## :material-tune:  Adding backend-specific settings
 
 A server subclasses `BaseMcpSettings` to add its backend fields (which must NOT
 live on the shared base) and per-mode credential checks:
@@ -101,7 +105,7 @@ app = make_cli(load_profile("profiles/mautic.json"), settings_cls=MauticSettings
 
 `get_settings(MauticSettings)` is a per-class cached singleton.
 
-## Running
+## :material-play-circle:  Running
 
 ```bash
 export ENVIRONMENT=production PUBLIC_BASE_URL=https://mcp.example.com
@@ -117,14 +121,14 @@ The server exposes:
 - `/healthz` — `200 OK` for container/k8s liveness probes (no auth).
 - `/` — a human-readable status + quickstart page; `/logo.svg` — the brand icon.
 
-## Connecting an MCP client
+## :material-connection:  Connecting an MCP client
 
 Point an MCP client (Claude Desktop, the MCP Inspector, an IDE) at
 `https://mcp.example.com/mcp`. With an auth mode set, the client runs the OAuth
 2.1 + PKCE consent flow against your IdP; bg-mcpcore (via FastMCP's OAuth proxy)
 mints a session and persists the encrypted state so restarts don't log users out.
 
-## Request lifecycle (what the framework does per call)
+## :material-sync:  Request lifecycle (what the framework does per call)
 
 ```text
 inbound request

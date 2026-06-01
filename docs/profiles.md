@@ -1,3 +1,7 @@
+---
+icon: material/file-cog
+---
+
 # Profile reference
 
 A profile is a JSON document validated against `mcp-profile/v1` (the schema is
@@ -9,7 +13,7 @@ The top-level model is **strict** (`extra="forbid"`) so a typo'd key is a load
 error; the source-specific sub-blocks (OpenAPI `spec`, `route_maps`, …) allow
 extras so a profile stays valid before the relevant extra is installed.
 
-## Top-level fields
+## :material-format-list-bulleted-square:  Top-level fields
 
 | Field | Type | Notes |
 |---|---|---|
@@ -23,7 +27,7 @@ extras so a profile stays valid before the relevant extra is installed.
 | `routes` | object | toggles for `healthz` / `logo` / `index` |
 | `extensions` | object | optional declarative prompts + resources catalogue |
 
-## `backend`
+## :material-server:  `backend`
 
 The upstream REST API. Omit the whole block for a backend-less server (the
 `ToolContext.client` is then `None` and `ctx.request(...)` raises).
@@ -38,7 +42,7 @@ The upstream REST API. Omit the whole block for a backend-less server (the
 }
 ```
 
-## `auth`
+## :material-key:  `auth`
 
 Two independent halves. `inbound` is who may call **this** MCP server; `outbound`
 is how this server authenticates to the **upstream** API.
@@ -88,7 +92,7 @@ also covers the bare httpx client the OpenAPI source drives) and **per-call**
 available — never silently fall back to a static default). See the
 [security model](security.md) and [Tier 3](tiers.md#tier-3-mostly-python).
 
-## `tools`
+## :material-wrench:  `tools`
 
 A single source **or a list** of sources (they compose: at most one *constructing*
 source — OpenAPI — builds the instance, the rest register onto it). Built-ins:
@@ -126,7 +130,7 @@ POST/PUT/PATCH/DELETE = destructive) so clients can gate auto-run. The `python`
 register callable receives `(mcp, ctx)`, may be sync or async, and returns the
 count of tools it registered.
 
-## `routes`
+## :material-sign-direction:  `routes`
 
 ```jsonc
 "routes": { "healthz": true, "logo": true, "index": true }
@@ -136,7 +140,7 @@ count of tools it registered.
 served only when the server passes a `static_dir` to `build_app_from_profile` /
 `make_cli`.
 
-## `extensions`
+## :material-puzzle:  `extensions`
 
 Layer declarative prompts + resources on top of the tool surface (the loader is
 pure core — no extra required). Points at a catalogue JSON:
@@ -147,7 +151,7 @@ pure core — no extra required). Points at a catalogue JSON:
 
 `required: true` makes a load failure fatal; `false` logs and continues.
 
-## A complete annotated profile
+## :material-file-document-check:  A complete annotated profile
 
 ```jsonc
 {

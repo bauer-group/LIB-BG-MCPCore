@@ -1,12 +1,16 @@
+---
+icon: material/rocket-launch
+---
+
 # Quickstart
 
-## Install
+## :material-download:  Install
 
 ```bash
 pip install "bg-mcpcore[openapi]"
 ```
 
-## A Tier-1 server (pure config)
+## :material-layers-triple:  A Tier-1 server (pure config)
 
 For a backend that ships a usable OpenAPI spec:
 
@@ -44,14 +48,14 @@ export MAUTIC_URL=https://mautic.example.com MAUTIC_TOKEN=... MAUTIC_OPENAPI_URL
 python src/main.py            # serves at /mcp, /healthz, /
 ```
 
-## A backend-less server (registry tools only)
+## :material-format-list-bulleted:  A backend-less server (registry tools only)
 
 ```jsonc
 { "id": "demo", "display_name": "Demo",
   "tools": { "source": "registry", "include": ["bg.ping", "bg.health"] } }
 ```
 
-## Settings
+## :material-cog:  Settings
 
 Runtime values + secrets come from the environment via `BaseMcpSettings`
 (`PUBLIC_BASE_URL`, `AUTH_MODE`, `AUTH_JWT_SIGNING_KEY`, OIDC creds, rate-limit,
@@ -61,7 +65,7 @@ fields and pass it via `make_cli(profile, settings_cls=MySettings)`.
 The fail-closed invariants are enforced in core: `AUTH_MODE=none` is rejected in
 production, and a JWT signing key is required for any active mode.
 
-## Next steps
+## :material-arrow-right-circle:  Next steps
 
 - [Core concepts](concepts.md) — the profile + settings + escape-hatch model,
   the assembler spine, and the request lifecycle.

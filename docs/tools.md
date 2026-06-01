@@ -1,3 +1,7 @@
+---
+icon: material/wrench
+---
+
 # Tool sources
 
 An MCP server built with `bg-mcpcore` exposes **tools** — the callable
@@ -16,7 +20,7 @@ they combine, and every declarative knob for shaping the generated surface.
     in the [profile reference](profiles.md); environment wiring is covered in
     [configuration](usage.md).
 
-## The three sources at a glance
+## :material-format-list-bulleted-square:  The three sources at a glance
 
 | Source | Use it when | Needs a backend? | Python required? |
 | ------ | ----------- | ---------------- | ---------------- |
@@ -60,7 +64,7 @@ await ctx.request("GET", "/short-urls", params={"page": 1})
     `RuntimeError: This server has no upstream backend configured`. The built-in
     `bg.health` tool handles this gracefully and reports `{"status": "no-backend"}`.
 
-### Least privilege: who gets `settings`
+### :material-shield-account: Least privilege: who gets `settings` { #least-privilege-who-gets-settings }
 
 This is a security guardrail, not a convention. The assembler (`app.py`) builds
 **two** contexts and hands each source exactly the one it is entitled to:
@@ -79,7 +83,7 @@ This is a security guardrail, not a convention. The assembler (`app.py`) builds
 
 ---
 
-## openapi — generate the surface from a spec
+## :material-api:  openapi — generate the surface from a spec
 
 The `openapi` source builds the entire FastMCP server from an OpenAPI 3 document
 via `FastMCP.from_openapi`. It is a **constructing** source: it produces the
@@ -263,7 +267,7 @@ the **normalised** path.
 
 ---
 
-## python — the escape hatch
+## :material-language-python:  python — the escape hatch
 
 When no spec can express what you need — composite tools that orchestrate several
 upstream calls, tools with bespoke validation, or anything genuinely
@@ -343,7 +347,7 @@ produces on its own — the reason the escape hatch exists.
 
 ---
 
-## registry — mount reusable tools by name
+## :material-format-list-bulleted:  registry — mount reusable tools by name
 
 The `registry` source mounts **named, reusable tool factories** from a central
 registry (`tools/registry.py`) onto your server. List the ones you want under
@@ -383,7 +387,7 @@ the full entry-point pattern.
 
 ---
 
-## Multi-source composition
+## :material-vector-combine:  Multi-source composition
 
 `tools` may be a **single object** or a **list**. As a list, sources compose:
 the constructing source (if any) builds the instance, and every registering
@@ -430,7 +434,7 @@ assembler resolves it like so (`app.py`):
 
 ---
 
-## Errors
+## :material-alert-circle:  Errors
 
 Every misconfiguration in the `tools` block surfaces as a single, consistent
 exception type — **`ProfileError`** — so a bad profile fails fast and loudly at

@@ -1,16 +1,20 @@
+---
+icon: material/download
+---
+
 # Installation
 
 `bg-mcpcore` is a normal Python package. The mandatory core is lean — install
 only the optional extras a given server actually needs.
 
-## Requirements
+## :material-checkbox-marked-circle-outline:  Requirements
 
 - **Python 3.12, 3.13, or 3.14.** The floor is 3.12 (lint + type-checks target
   it, so nothing uses newer syntax).
 - A backend REST API your server will front (for any server that declares a
   `backend`).
 
-## From PyPI
+## :material-download:  From PyPI
 
 === "pip"
 
@@ -26,7 +30,7 @@ only the optional extras a given server actually needs.
     uv add "bg-mcpcore[openapi]"
     ```
 
-## Optional extras
+## :material-package-variant:  Optional extras
 
 The core depends only on `fastmcp`, `httpx`, `pydantic`, `pydantic-settings`,
 `structlog`, `rich`, `cryptography`, `typer`, and the disk-backed encrypted state
@@ -49,7 +53,7 @@ Combine extras as needed — a typical production server:
 pip install "bg-mcpcore[openapi,redis,oauth-providers,tasks]"
 ```
 
-## Directly from GitHub
+## :material-download:  Directly from GitHub
 
 Install an unreleased revision or a specific tag without PyPI:
 
@@ -64,7 +68,7 @@ pip install git+https://github.com/bauer-group/LIB-BG-MCPCore.git@v1.2.0
 pip install "bg-mcpcore[openapi] @ git+https://github.com/bauer-group/LIB-BG-MCPCore.git@main"
 ```
 
-## Development install
+## :material-hammer-wrench:  Development install
 
 Working on the library itself? Clone and install editable with the `dev` extra.
 The project uses [uv](https://docs.astral.sh/uv/) for fast, reproducible envs:
@@ -84,7 +88,7 @@ uv run --extra docs mkdocs serve         # live docs preview
     `uv run --python 3.12 pytest` / `--python 3.13` / `--python 3.14` runs the
     suite against each supported interpreter, mirroring the CI matrix.
 
-## Verify the install
+## :material-check-decagram:  Verify the install
 
 ```bash
 python -c "import bg_mcpcore; print(bg_mcpcore.__version__)"
@@ -94,7 +98,7 @@ python -c "from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 Both should succeed with only the core installed — no extra is a hidden hard
 dependency of the public API.
 
-## Next
+## :material-arrow-right-circle:  Next
 
 - [Quickstart](quickstart.md) — a running server in five minutes.
 - [Core concepts](concepts.md) — the profile + settings + escape-hatch model.

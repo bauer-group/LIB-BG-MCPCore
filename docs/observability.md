@@ -1,3 +1,7 @@
+---
+icon: material/chart-line
+---
+
 # Observability & limits
 
 `bg-mcpcore` ships a small, opinionated observability layer that every server inherits for free: structured logging with built-in PII/secret redaction, a startup banner with loud security warnings, optional Sentry error tracking, and a token-bucket rate limiter that runs as the first (cheapest) rejection path on every request.
@@ -14,7 +18,7 @@ Logging is configured first so that everything after it — including Sentry's i
 
 ---
 
-## Structured logging
+## :material-text-box-outline:  Structured logging
 
 Logging is built on [structlog](https://www.structlog.org/). structlog is the single source of truth: stdlib `logging` is routed through it as well, so third-party libraries (`httpx`, `fastmcp`, `uvicorn`) emit in the same shape as your own log lines. `setup_logging()` is idempotent — calling it twice is a no-op until `reset_logging()` is called (used only by tests).
 
@@ -134,7 +138,7 @@ mcp = await build_app_from_profile(
 
 ---
 
-## Startup banner & loud warnings
+## :material-bullhorn:  Startup banner & loud warnings
 
 After the server is fully assembled, `print_banner` prints a Rich-formatted boot banner. It is safe to call before logging is fully configured because it writes through the shared Rich `console` (with `force_terminal=True`, so colours survive in Docker logs that lack a real TTY).
 
@@ -162,7 +166,7 @@ On top of the banner, three **loud** warnings exist for security-relevant miscon
 
 ---
 
-## Sentry error tracking
+## :material-bug:  Sentry error tracking
 
 Sentry is fully optional and lazily wired. `init_sentry` activates **only** when a DSN is configured; `sentry-sdk` is imported lazily so it stays an optional runtime dependency.
 
@@ -192,7 +196,7 @@ SENTRY_TRACES_SAMPLE_RATE=0.05
 
 ---
 
-## Rate limiting
+## :material-speedometer:  Rate limiting
 
 The rate limiter is a **token-bucket** built on FastMCP's `RateLimitingMiddleware`, wrapped with a client-identity resolver tailored for reverse-proxy deployments. It is added to the server **first**, ahead of auth-mode and tool middleware, because it is the cheapest rejection path under load — over-limit requests are dropped before any heavier work runs.
 
@@ -255,7 +259,7 @@ RATE_LIMITER_TRUSTED_PROXY_HOPS=1
 
 ---
 
-## See also
+## :material-link-variant:  See also
 
 - [configuration](usage.md) — how settings and env vars are loaded
 - [deployment](deployment.md) — production wiring, proxies, and the hop count

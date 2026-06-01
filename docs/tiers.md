@@ -1,3 +1,7 @@
+---
+icon: material/layers-triple
+---
+
 # The three tiers: config vs. code
 
 bg-mcpcore is built on one principle — **config for the standard, code for the
@@ -30,7 +34,7 @@ in **every** tier. You never re-implement it.
 
 ---
 
-## Tier 1 — pure config
+## :material-numeric-1-circle: Tier 1 — pure config { #tier-1-pure-config }
 
 **When:** the backend publishes a usable OpenAPI 3 spec and you want every
 operation exposed as a tool, with standard inbound auth (OIDC / Entra / Google /
@@ -86,7 +90,7 @@ an OpenAPI spec → a complete server with zero tool code.
 
 ---
 
-## Tier 2 — config + a little Python
+## :material-numeric-2-circle: Tier 2 — config + a little Python { #tier-2-config-a-little-python }
 
 **When:** you have an OpenAPI spec but also need (a) a few bespoke convenience
 tools the spec can't express, or (b) a custom outbound credential the built-in
@@ -147,7 +151,7 @@ def make_resolver(cfg):
 
 ---
 
-## Tier 3 — mostly Python
+## :material-numeric-3-circle: Tier 3 — mostly Python { #tier-3-mostly-python }
 
 **When:** the backend has no usable OpenAPI spec (so tools are hand-written), and
 /or it uses **per-user on-behalf-of** auth where each MCP user's own upstream
@@ -212,7 +216,7 @@ See [Writing plugins](plugins.md) for the provider/resolver/middleware contracts
 
 ---
 
-## Mixing tiers
+## :material-shuffle-variant: Mixing tiers
 
 Tiers are not exclusive. A real server often combines them: an OpenAPI surface
 (Tier 1) + two composite hand-written tools (Tier 2) + a per-user resolver

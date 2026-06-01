@@ -64,6 +64,15 @@ nav:
       - API reference: api.md
       - Changelog: changelog.md
 
+# Fail the build (under --strict) on a link to a missing page OR a missing
+# heading anchor, so icon-in-heading slug changes can never silently break a
+# cross-reference.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
 markdown_extensions:
   - abbr
   - admonition

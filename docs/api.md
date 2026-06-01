@@ -1,3 +1,7 @@
+---
+icon: material/api
+---
+
 # API reference
 
 This reference is generated directly from the source docstrings, so it can never
@@ -9,13 +13,13 @@ behind these symbols, start with [core concepts](concepts.md).
 from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 ```
 
-## Application assembly
+## :material-cog:  Application assembly
 
 ::: bg_mcpcore.app.build_app_from_profile
 
 ::: bg_mcpcore.cli.make_cli
 
-## Profiles
+## :material-file-cog:  Profiles
 
 ::: bg_mcpcore.profile.loader.load_profile
 
@@ -23,7 +27,7 @@ from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 
 ::: bg_mcpcore.profile.models.Profile
 
-## Settings
+## :material-tune:  Settings
 
 ::: bg_mcpcore.settings.base.BaseMcpSettings
 
@@ -41,7 +45,7 @@ from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 
 ::: bg_mcpcore.settings.helpers.has_value
 
-## Tools
+## :material-wrench:  Tools
 
 ::: bg_mcpcore.tools.protocol.ToolContext
 
@@ -55,7 +59,7 @@ from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 
 ::: bg_mcpcore.plugins.build_tool_provider
 
-## Authentication
+## :material-key:  Authentication
 
 ### Inbound providers
 
@@ -85,11 +89,11 @@ from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 
 ::: bg_mcpcore.auth.storage.build_client_storage
 
-## Upstream HTTP client
+## :material-web:  Upstream HTTP client
 
 ::: bg_mcpcore.http.client.UpstreamClient
 
-## Server runtime
+## :material-server:  Server runtime
 
 ::: bg_mcpcore.server.runner.run_transport
 
@@ -105,7 +109,7 @@ from bg_mcpcore import build_app_from_profile, load_profile, make_cli
 
 ::: bg_mcpcore.server.routes.register_index_route
 
-## Observability
+## :material-chart-line:  Observability
 
 ::: bg_mcpcore.observability.setup_logging
 

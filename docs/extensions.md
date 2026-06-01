@@ -1,3 +1,7 @@
+---
+icon: material/puzzle
+---
+
 # Extensions
 
 **Extensions** are the config-driven prompts + resources layer that sits *on top of* the tool surface. They let an operator add two more MCP primitives — reusable **prompt templates** and read-only **resources / resource templates** — declaratively from a JSON catalogue, **without writing any tool code**.
@@ -12,7 +16,7 @@ Where [tool sources](tools.md) expose *actions* (OpenAPI operations, Python func
 
 ---
 
-## When to use them
+## :material-help-circle:  When to use them
 
 | Goal | Use |
 | --- | --- |
@@ -25,7 +29,7 @@ The whole point is that prompts and resources are common enough that hand-writin
 
 ---
 
-## Wiring
+## :material-cable-data:  Wiring
 
 ### The profile `extensions` block
 
@@ -83,7 +87,7 @@ where `resources` counts static-URI entries and `templates` counts parameterised
 
 ---
 
-## Prompts
+## :material-message-text:  Prompts
 
 A prompt entry (`PromptConfig`) becomes a FastMCP prompt whose body is the result of `string.Template(template).substitute(**kwargs)`. The function signature is synthesised at registration so FastMCP can introspect the arguments (no `exec()` is used).
 
@@ -155,7 +159,7 @@ The catalogue is validated strictly so a mistake fails loudly at boot rather tha
 
 ---
 
-## Resources & resource templates
+## :material-file-document:  Resources & resource templates
 
 A resource entry (`ResourceConfig`) becomes either a **static resource** (URI has no `{placeholder}`) or a **resource template** (URI has one or more `{placeholder}` segments). At call time the `_runner` issues a `GET` to `backend.path` through the `UpstreamClient` and returns the body.
 
@@ -238,7 +242,7 @@ The first entry registers as a static **resource** (`resources: 1`); the second,
 
 ---
 
-## Complete catalogue + profile
+## :material-format-list-bulleted-square:  Complete catalogue + profile
 
 A full catalogue combining prompts, a static resource, and a resource template:
 
@@ -302,7 +306,7 @@ Loading this catalogue yields counts `{"prompts": 1, "resources": 1, "templates"
 
 ---
 
-## Failure behavior
+## :material-alert-circle: Failure behavior { #failure-behavior }
 
 The failure policy is **fail fast on the catalogue, tolerate one bad entry**:
 
@@ -320,7 +324,7 @@ The failure policy is **fail fast on the catalogue, tolerate one bad entry**:
 
 ---
 
-## See also
+## :material-link-variant:  See also
 
 - [tool sources](tools.md) — the action surface extensions layer on top of
 - [profile reference](profiles.md) — the full profile schema, including the `extensions` and `backend` blocks

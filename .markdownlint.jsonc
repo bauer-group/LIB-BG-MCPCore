@@ -24,6 +24,12 @@
   // both `__` and `**` are valid Markdown bold.
   "MD050": false,
 
+  // Link fragments — headings with icons pin their anchor via attr_list
+  // (`## :material-x: Title { #slug }`), which MD051 cannot parse (it derives
+  // the slug from the icon-prefixed text). mkdocs `--strict` with
+  // `validation.anchors` validates these correctly instead.
+  "MD051": false,
+
   // Accept the existing table pipe spacing (spaced header/body + compact rule).
   "MD060": { "style": "leading_and_trailing" }
 }

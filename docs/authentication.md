@@ -1,3 +1,7 @@
+---
+icon: material/key
+---
+
 # Authentication
 
 Authentication in bg-mcpcore has two independent, orthogonal halves. Keeping
@@ -22,7 +26,7 @@ caller's identity reaches the upstream API is an explicit on-behalf-of resolver
     load-bearing per-server divergence. The full threat model and the
     invariants summarised below are in the [security model](security.md).
 
-## Fail-closed invariants
+## :material-shield-lock:  Fail-closed invariants
 
 These hold for **every** server and cannot be relaxed by a subclass. They run in
 `BaseMcpSettings` *before* any per-mode credential check (`validate_provider_auth`),
@@ -47,7 +51,7 @@ plugin — never by accepting an arbitrary string.
 
 See the [security model](security.md) for the complete reasoning behind these.
 
-## Inbound: who may call this server
+## :material-key:  Inbound: who may call this server
 
 `AUTH_MODE` (env, snake_case maps 1:1 to the `auth_mode` field) selects one
 registered provider. The full catalogue:
@@ -374,7 +378,7 @@ profile values; the `client_secret` is referenced by env-var name:
     }
     ```
 
-## Outbound: authenticating to the upstream API
+## :material-lock:  Outbound: authenticating to the upstream API { #outbound-authenticating-to-the-upstream-api }
 
 The outbound resolver is how the MCP server presents itself to the REST API it
 fronts. It is selected by `auth.outbound.type` in the profile and implements the
@@ -491,7 +495,7 @@ unset variable, the build raises `ProfileError`. Unknown `type` values raise
     `auth_headers` raise guarantees a per-user server never leaks a shared
     credential.
 
-## Adding a custom inbound provider or resolver
+## :material-power-plug:  Adding a custom inbound provider or resolver
 
 A non-standard or proprietary IdP (opaque tokens, a bespoke OAuth2 flow), or a
 custom outbound scheme (e.g. AWS SigV4), is a pip-installable plugin — never a
@@ -522,7 +526,7 @@ with its tenant gate) via the `bg_mcpcore.auth_middleware` group. See
 [plugins](plugins.md) for the full plugin surface and the `ToolContext`
 least-privilege rules.
 
-## See also
+## :material-link-variant:  See also
 
 - [Security model](security.md) — the complete threat model and every invariant
 - [Profile reference](profiles.md) — the `auth.inbound` / `auth.outbound` schema
