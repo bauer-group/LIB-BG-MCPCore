@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from importlib.metadata import entry_points
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..observability import get_logger
 from .protocol import ToolContext
@@ -73,7 +73,21 @@ def _register_ping(mcp: FastMCP, _ctx: ToolContext) -> None:
         return "pong"
 
 
+def _register_upstream_health(mcp: FastMCP, ctx: ToolContext) -> None:
+    @mcp.tool
+    async def upstream_health() -> dict[str, Any]:
+        """Report whether the upstream REST API behind this server is reachable."""
+        if ctx.client is None:
+            return {"status": "no-backend"}
+        try:
+            code = await ctx.client.health()
+        except Exception as exc:
+            return {"status": "unreachable", "error": str(exc)}
+        return {"status": "ok" if code < 400 else "degraded", "http_status": code}
+
+
 register_tool("bg.ping", _register_ping)
+register_tool("bg.health", _register_upstream_health)
 
 
 __all__ = ["ToolFactory", "available_tools", "get_tool", "register_tool"]

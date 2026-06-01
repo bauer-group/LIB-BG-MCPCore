@@ -45,8 +45,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Spec-driven tool generation (FastMCP.from_openapi + ref resolution).
-openapi = ["jsonref>=1.1.0,<2.0.0"]
+# Spec-driven tool generation. FastMCP.from_openapi + the $ref resolver are
+# core/stdlib; pyyaml is only needed to ingest YAML (not JSON) specs.
+openapi = ["pyyaml>=6.0.0,<7.0.0"]
 # Redis-backed OAuth-state store (multi-replica deployments).
 redis = ["py-key-value-aio[redis]>=0.4.4,<1.0.0"]
 # Cloud IdP inbound providers (Entra / Google ship inside FastMCP; this extra
@@ -86,6 +87,16 @@ docs = [
 # Scaffolder CLI: `bg-mcpcore new <name>` (implemented in Phase 7).
 [project.scripts]
 bg-mcpcore = "bg_mcpcore.cli:main"
+
+# ── Pluggable seams (entry points) ───────────────────────────────────────────
+# Tool sources beyond the built-in python/registry. The openapi factory is
+# loaded lazily (only when a profile sets tools.source="openapi").
+[project.entry-points."bg_mcpcore.tool_sources"]
+openapi = "bg_mcpcore.openapi.tool_provider:create_openapi_tool_provider"
+
+# Reusable pytest fixtures, available once bg-mcpcore[testkit] is installed.
+[project.entry-points.pytest11]
+bg_mcpcore_testkit = "bg_mcpcore.testing.plugin"
 
 [project.urls]
 Homepage = "https://github.com/bauer-group/LIB-BG-MCPCore"
