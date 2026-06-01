@@ -1,0 +1,10 @@
+# CODEOWNERS — who reviews changes to which paths.
+# Patterns work like .gitignore rules; owners are @username or @org/team.
+
+# Default: every PR requests a review from the maintainer.
+*   @karlspace
+
+# Security-sensitive surfaces get explicit ownership.
+/src/bg_mcpcore/auth/        @karlspace
+/src/bg_mcpcore/settings/    @karlspace
+/src/bg_mcpcore/plugins.py   @karlspace

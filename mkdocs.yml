@@ -1,0 +1,43 @@
+site_name: bg-mcpcore
+site_description: BAUER GROUP MCP framework — config-driven, pluggable REST-API MCP servers on FastMCP
+repo_url: https://github.com/bauer-group/LIB-BG-MCPCore
+repo_name: bauer-group/LIB-BG-MCPCore
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Profile reference: profiles.md
+  - Writing plugins: plugins.md
+  - Security model: security.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search

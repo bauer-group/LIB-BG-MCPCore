@@ -1,0 +1,7 @@
+{
+  "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+  "id": "registry-demo",
+  "display_name": "BG Registry Demo",
+  "instructions": "A backend-less demo server mounting reusable registry tools.",
+  "tools": { "source": "registry", "include": ["bg.ping", "bg.health"] }
+}

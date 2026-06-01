@@ -1,7 +1,36 @@
 # bg-mcpcore
 
-Config-driven, pluggable REST-API MCP servers on FastMCP.
+Config-driven, pluggable REST-API MCP servers on [FastMCP](https://github.com/jlowin/fastmcp).
 
-See the [README](../README.MD) for the quickstart. Full documentation
-(profile schema reference, plugin authoring, security model) is built out
-alongside the framework.
+bg-mcpcore is the shared foundation for BAUER GROUP's fleet of
+[Model Context Protocol](https://modelcontextprotocol.io) servers that bridge
+REST APIs. A server is described by a **declarative JSON profile**; the genuinely
+complex parts drop down to **Python escape hatches**.
+
+## Why
+
+The first two MCP servers (Zammad, Shlink) duplicated security-sensitive
+infrastructure — encrypted OAuth-state storage, PII log redaction, rate
+limiting, the OAuth-gated bootstrap — as drifting copies. bg-mcpcore gives that
+code one audited, tested home, and turns a new REST-API MCP server into a
+~15-line profile plus a 4-line entrypoint.
+
+## Three complexity tiers
+
+| Tier | When | Effort |
+|---|---|---|
+| **1 — pure config** | backend ships a usable OpenAPI spec, standard auth | profile JSON only, no Python |
+| **2 — config + a little Python** | OpenAPI base + a few hand tools, or a custom resolver | profile + a `type: python` reference |
+| **3 — mostly Python** | no usable spec (e.g. Zammad) | `tools.source: python`; the profile still drives auth, rate-limit, identity, routes |
+
+## Design pillars
+
+- **Modular** — new auth modes / tool sources / resolvers are pip-installable
+  plugins registered via Python entry points, never core edits.
+- **Configurable** — every standard behaviour is an overridable profile default.
+- **Stable** — the mandatory core depends only on fastmcp/pydantic/httpx/
+  structlog/cryptography; volatile concerns live in optional extras.
+- **Secure** — fail-closed auth invariants are enforced in core and a profile
+  cannot switch them off.
+
+Start with the [Quickstart](quickstart.md).

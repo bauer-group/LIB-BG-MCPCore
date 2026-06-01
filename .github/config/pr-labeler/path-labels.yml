@@ -1,0 +1,92 @@
+# PR Labeler Configuration for bg-mcpcore
+# Automatically assigns labels based on file changes.
+
+size-labels:
+  xs: 0-10
+  small: 11-50
+  medium: 51-200
+  large: 201-500
+  xl: 501-1000
+  xxl: 1001+
+
+path-labels:
+  "src/bg_mcpcore/":
+    - "area: core"
+
+  "src/bg_mcpcore/auth/":
+    - "area: auth"
+    - "priority: high"
+
+  "src/bg_mcpcore/settings/":
+    - "area: settings"
+    - "priority: high"
+
+  "src/bg_mcpcore/profile/":
+    - "area: profile-engine"
+
+  "src/bg_mcpcore/openapi/":
+    - "area: openapi"
+
+  "src/bg_mcpcore/plugins.py":
+    - "area: plugins"
+
+  "tests/":
+    - "area: tests"
+    - "type: testing"
+
+  "docs/":
+    - "area: documentation"
+    - "type: documentation"
+
+  "examples/":
+    - "area: examples"
+    - "type: documentation"
+
+  "pyproject.toml":
+    - "area: build"
+    - "type: build"
+
+  ".github/workflows/":
+    - "area: ci/cd"
+    - "type: ci"
+
+  "SECURITY.MD":
+    - "area: security"
+    - "type: security"
+    - "priority: high"
+
+branch-labels:
+  feature/*: ["type: feature"]
+  fix/*: ["type: bugfix"]
+  hotfix/*: ["type: hotfix", "priority: critical"]
+  chore/*: ["type: chore"]
+  docs/*: ["type: documentation"]
+  test/*: ["type: testing"]
+  ci/*: ["type: ci"]
+  security/*: ["type: security", "priority: high"]
+  refactor/*: ["type: refactor"]
+
+title-labels:
+  - pattern: "(?i)(breaking|major)"
+    labels: ["type: breaking-change", "priority: critical"]
+  - pattern: "(?i)(fix|bug)"
+    labels: ["type: bugfix"]
+  - pattern: "(?i)(feat|feature)"
+    labels: ["type: feature"]
+  - pattern: "(?i)(doc|documentation)"
+    labels: ["type: documentation"]
+  - pattern: "(?i)(security|vulnerability|cve)"
+    labels: ["type: security", "priority: high"]
+  - pattern: "(?i)(refactor|cleanup)"
+    labels: ["type: refactor"]
+
+auto-reviewers:
+  "area: auth":
+    reviewers: ["karl.bauer@bauer-group.com"]
+    review-required: true
+  "area: settings":
+    reviewers: ["karl.bauer@bauer-group.com"]
+    review-required: true
+  "type: breaking-change":
+    reviewers: ["karl.bauer@bauer-group.com"]
+    review-required: true

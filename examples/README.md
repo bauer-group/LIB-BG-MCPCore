@@ -1,7 +1,19 @@
 # Examples
 
-Runnable examples land here as the framework takes shape:
+Each example is a complete, runnable bg-mcpcore server. Run any of them with a
+minimal dev environment:
 
-- `minimal_openapi_server/` — a Tier-1 server (profile only, no Python)
-- `python_tools_server/` — a Tier-3 server using the `tools.source: "python"` escape hatch
-- `custom_tool_source_plugin/` — a third-party `tool_source` registered via entry points
+```bash
+pip install "bg-mcpcore[openapi]"
+export PUBLIC_BASE_URL=http://localhost:8000
+export ENVIRONMENT=development
+export AUTH_MODE=none          # dev only - forbidden in production
+cd examples/<name> && python main.py
+# -> serves MCP at http://localhost:8000/mcp, health at /healthz
+```
+
+| Example | Tier | Demonstrates |
+|---|---|---|
+| `registry_server/` | — | backend-less server mounting reusable registry tools (no Python) |
+| `openapi_server/` | 1 | tools generated from an OpenAPI spec, pure config |
+| `python_tools_server/` | 3 | the `tools.source: python` escape hatch (hand-written tools) |

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+  "id": "python-tools",
+  "display_name": "BG Python Tools (escape-hatch demo)",
+  "instructions": "Tier-3 demo: hand-written tools via the python escape hatch.",
+  "tools": { "source": "python", "register": "my_tools:register" }
+}

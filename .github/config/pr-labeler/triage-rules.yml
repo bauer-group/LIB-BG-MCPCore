@@ -1,0 +1,63 @@
+# Triage Rules for bg-mcpcore
+# Advanced rules for automatic PR and Issue classification.
+
+priority-rules:
+  critical:
+    conditions:
+      - title-contains: ["security", "vulnerability", "exploit", "breaking"]
+      - files-match: ["SECURITY.MD", "src/bg_mcpcore/auth/", "src/bg_mcpcore/settings/"]
+      - branch-prefix: ["hotfix/", "security/"]
+  high:
+    conditions:
+      - title-contains: ["auth", "token", "crypto", "data loss"]
+      - files-match: ["src/bg_mcpcore/auth/", "src/bg_mcpcore/plugins.py"]
+      - size: ["xl", "xxl"]
+  medium:
+    conditions:
+      - title-contains: ["enhancement", "improvement", "optimization"]
+      - files-match: ["tests/", "examples/", "src/bg_mcpcore/openapi/"]
+      - branch-prefix: ["feature/"]
+  low:
+    conditions:
+      - title-contains: ["documentation", "typo", "comment", "readme"]
+      - files-match: ["README.MD", "docs/", "CHANGELOG.md"]
+      - size: ["xs", "small"]
+      - branch-prefix: ["docs/", "chore/"]
+
+type-rules:
+  breaking-change:
+    conditions:
+      - title-contains: ["breaking", "major", "incompatible"]
+      - files-match: ["src/bg_mcpcore/__init__.py", "src/bg_mcpcore/settings/", "src/bg_mcpcore/profile/"]
+  security:
+    conditions:
+      - title-contains: ["security", "vulnerability", "cve", "auth", "crypto"]
+      - files-match: ["src/bg_mcpcore/auth/", "src/bg_mcpcore/settings/"]
+      - branch-prefix: ["security/"]
+  testing:
+    conditions:
+      - files-match: ["tests/", "conftest.py"]
+      - title-contains: ["test", "coverage"]
+  documentation:
+    conditions:
+      - files-match: ["README.MD", "docs/", "examples/"]
+      - title-contains: ["doc", "readme", "example", "guide"]
+  ci:
+    conditions:
+      - files-match: [".github/workflows/", "pyproject.toml", ".pre-commit-config.yaml"]
+      - title-contains: ["workflow", "ci", "build", "release"]
+
+assignment-rules:
+  security:
+    conditions:
+      - labels: ["type: security", "priority: critical"]
+    assignees: ["karl.bauer@bauer-group.com"]
+  breaking-change:
+    conditions:
+      - labels: ["type: breaking-change"]
+    assignees: ["karl.bauer@bauer-group.com"]
+
+exemptions:
+  - branch-prefix: ["dependabot/"]
+  - author: ["dependabot[bot]", "github-actions[bot]"]
+  - title-contains: ["merge", "revert"]

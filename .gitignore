@@ -48,6 +48,11 @@ ENV/
 # mkdocs
 /site
 
+# uv — a library is consumed across environments, so we don't pin a lockfile
+# (the project is pip-native; uv is only a local convenience). Matches the
+# NocoDB_SimpleClient blueprint.
+uv.lock
+
 # PyPI
 .pypirc
 
