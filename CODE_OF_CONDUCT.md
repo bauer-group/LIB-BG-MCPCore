@@ -25,7 +25,7 @@ information without explicit permission.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behaviour may be
-reported to the maintainers at **conduct@bauer-group.com**. All complaints will
+reported to the maintainers at <conduct@bauer-group.com>. All complaints will
 be reviewed and investigated promptly and fairly.
 
 ## Attribution

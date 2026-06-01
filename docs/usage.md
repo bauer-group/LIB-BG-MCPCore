@@ -30,7 +30,7 @@ map 1:1 to upper-snake env vars (`public_base_url` ← `PUBLIC_BASE_URL`).
 | Env var | Default | Notes |
 |---|---|---|
 | `ENVIRONMENT` | `production` | `production` \| `staging` \| `development` |
-| `PUBLIC_BASE_URL` | `http://localhost:8000` | public origin; **must** match the IdP's redirect-URI registration |
+| `PUBLIC_BASE_URL` | `http://localhost:8000` | public origin; normalised with a trailing slash; **must** match the IdP's redirect-URI registration |
 | `LOG_FORMAT` | `json` | `json` (prod) \| `console` (dev) |
 | `LOG_LEVEL` | `INFO` | |
 
@@ -54,7 +54,13 @@ map 1:1 to upper-snake env vars (`public_base_url` ← `PUBLIC_BASE_URL`).
 | `AUTH_REDIS_URL` | unset | set → Redis-backed encrypted OAuth state; unset → encrypted disk store |
 | `AUTH_STORAGE_ENCRYPTION_KEY` | unset | **required** (valid Fernet key) when `AUTH_REDIS_URL` is set |
 | `AUTH_DISK_STORAGE_PATH` | `/app/data/oauth-storage` | mount as a volume in production |
-| `OIDC_DISCOVERY_URL` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` / `OIDC_*` | — | for `AUTH_MODE=oidc` |
+| `OIDC_DISCOVERY_URL` | unset | discovery doc URL (recommended path); derives all endpoints + issuer |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | — | OAuth client credentials (`AUTH_MODE=oidc`) |
+| `OIDC_ISSUER` | unset | **required** for explicit-endpoint mode (no discovery URL); the token `iss` |
+| `OIDC_AUTH_URI` / `OIDC_TOKEN_URI` / `OIDC_JWKS_URI` | — | explicit endpoints (when no discovery URL) |
+| `OIDC_SCOPES` | `openid profile email` | space-separated |
+| `OIDC_USERNAME_CLAIM` | `preferred_username` | token claim used as the username |
+| `OIDC_USERINFO_URI` | unset | optional userinfo endpoint |
 
 ### Rate limiting + observability
 

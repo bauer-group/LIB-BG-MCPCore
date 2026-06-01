@@ -1,0 +1,11 @@
+{
+  // bg-mcpcore Markdown house style. Tables use compact separators (|---|) with
+  // spaced header/body pipes — accept that verbatim rather than churning every
+  // table to satisfy the default "consistent" inference.
+  "default": true,
+  // Line length: prose wraps at ~72-100, but tables and fenced code blocks
+  // legitimately exceed it. The repo is not on a hard column limit.
+  "MD013": false,
+  // Accept the existing table pipe spacing (spaced header/body + compact rule).
+  "MD060": { "style": "leading_and_trailing" }
+}

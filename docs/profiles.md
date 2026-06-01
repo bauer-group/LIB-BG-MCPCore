@@ -60,7 +60,7 @@ entry, never inlined:
 
 ```jsonc
 "inbound": { "mode": "keycloak", "config": { "realm_url": "${env:KEYCLOAK_REALM_URL}" } }
-"inbound": { "mode": "auth0",    "config": { "config_url": "...", "client_id": "...", "client_secret_env": "AUTH0_SECRET" } }
+"inbound": { "mode": "auth0",    "config": { "config_url": "...", "client_id": "...", "audience": "...", "client_secret_env": "AUTH0_SECRET" } }
 ```
 
 `mode: oidc` (core built-in) covers any standard-OIDC IdP via discovery and needs

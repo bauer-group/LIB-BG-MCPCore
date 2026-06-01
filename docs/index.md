@@ -23,7 +23,7 @@ through each with a full profile + code.
 | Tier | When | Effort |
 |---|---|---|
 | [**1 — pure config**](tiers.md#tier-1-pure-config) | backend ships a usable OpenAPI spec, standard auth | profile JSON only, no Python |
-| [**2 — config + a little Python**](tiers.md#tier-2-config-a-little-python) | OpenAPI base + a few hand tools, or a custom resolver | profile + a `type: python` reference |
+| [**2 — config + a little Python**](tiers.md#tier-2-config-a-little-python) | OpenAPI base + a few hand tools, or a custom resolver | profile + a `python` source/resolver reference |
 | [**3 — mostly Python**](tiers.md#tier-3-mostly-python) | no usable spec (e.g. Zammad) | `tools.source: python`; the profile still drives auth, rate-limit, identity, routes |
 
 ## Design pillars

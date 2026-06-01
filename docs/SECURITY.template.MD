@@ -16,7 +16,7 @@ Report via **GitHub Security Advisories** — a secure, private channel:
 
 ### 📧 Alternative
 
-- **📬 Email**: security@bauer-group.com
+- **📬 Email**: <security@bauer-group.com>
 - **🐛 Issues**: for non-sensitive matters only (use your discretion)
 
 ### 📋 What to Include
@@ -78,14 +78,14 @@ locally before opening a PR.
 ## 📞 Contact
 
 - **🛡️ Security Team**: via GitHub Security Advisories
-- **📧 Primary**: security@bauer-group.com
+- **📧 Primary**: <security@bauer-group.com>
 
 ## 🚨 Emergency Contacts
 
 For a critical, actively-exploited vulnerability affecting a deployed bg-mcpcore
 server:
 
-- **📧 Primary**: security@bauer-group.com (mark the subject `URGENT SECURITY`)
+- **📧 Primary**: <security@bauer-group.com> (mark the subject `URGENT SECURITY`)
 - **📈 Escalation**: the repository maintainers (see CODEOWNERS), via a GitHub
   Security Advisory with the "critical" severity set.
 

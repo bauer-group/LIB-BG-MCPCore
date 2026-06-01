@@ -57,7 +57,7 @@ jobs:
     name: 🐍 Python Semantic Release Pipeline
     uses: bauer-group/automation-templates/.github/workflows/python-semantic-release.yml@main
     with:
-      python-version: '3.14'          # bg-mcpcore targets 3.14 (requires-python >= 3.14)
+      python-version: '3.14'          # build/release on the newest supported (requires-python >= 3.12)
       run-tests: true                 # re-run the suite at publish time
       run-security-scan: true         # gitleaks/GitGuardian secret scan
       security-engine: 'both'         # run both scanners (org standard)
