@@ -47,6 +47,14 @@ def test_unknown_top_level_key_rejected() -> None:
         load_profile(_profile_dict(bogus_key=True), env={})
 
 
+def test_schema_hint_key_is_ignored() -> None:
+    # `$schema` points editors at mcp-profile/v1.json for autocompletion; the
+    # loader must drop it rather than reject the profile (every example ships it).
+    over = {"$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json"}
+    profile = load_profile(_profile_dict(**over), env={})  # type: ignore[arg-type]
+    assert profile.id == "demo"
+
+
 # ── inbound auth (closed set) ────────────────────────────────────────────────
 
 

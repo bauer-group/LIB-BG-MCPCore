@@ -73,6 +73,13 @@ def load_profile(
     if interpolate_env:
         data = _interpolate(data, env)
 
+    if isinstance(data, dict):
+        # `$schema` is a JSON-Schema editor/validation hint (it points profiles at
+        # mcp-profile/v1.json for IDE autocompletion), not profile data — drop it
+        # so the strict model does not reject an otherwise-valid profile. Copying
+        # avoids mutating a dict passed in by the caller.
+        data = {key: item for key, item in data.items() if key != "$schema"}
+
     try:
         return Profile.model_validate(data)
     except ValidationError as exc:
