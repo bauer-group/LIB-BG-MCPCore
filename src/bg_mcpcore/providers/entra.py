@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..observability import get_logger
+from ..observability import get_logger, warn_entra_open_tenants
 from .protocols import EntraSettings
 
 logger = get_logger("bg-mcpcore.auth.entra")
@@ -53,6 +53,13 @@ def build_entra_provider(settings: EntraSettings, inbound: Any | None = None) ->
             tenant_id=tenant_id,
             hint="set ENTRA_TENANT_ID=organizations or common for true multi-tenant",
         )
+
+    # entra-multi validates the JWT signature against Microsoft's multi-tenant
+    # JWKS but accepts ANY tenant unless the allowlist middleware gates the `tid`
+    # claim. An empty allowlist means "any Entra tenant on earth" — warn loudly so
+    # an operator does not ship that unknowingly (the gate is otherwise silent).
+    if str(settings.auth_mode) == "entra-multi" and not list(settings.entra_allowed_tenants or []):
+        warn_entra_open_tenants()
 
     provider = AzureProvider(
         client_id=settings.entra_client_id,

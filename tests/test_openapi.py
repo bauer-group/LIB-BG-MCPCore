@@ -64,3 +64,41 @@ async def test_load_spec_rejects_empty_paths(tmp_path) -> None:  # type: ignore[
     bad.write_text(json.dumps({"openapi": "3.0.0", "paths": {}}), encoding="utf-8")
     with pytest.raises(SpecLoadError, match="0 operations"):
         await load_spec(str(bad))
+
+
+def _openapi_profile(spec_path, route_maps):  # type: ignore[no-untyped-def]
+    return load_profile(
+        {
+            "id": "api",
+            "display_name": "API",
+            "backend": {"base_url": "http://localhost:9999"},
+            "tools": {
+                "source": "openapi",
+                "spec": {"source": str(spec_path)},
+                "route_maps": route_maps,
+            },
+        },
+        env={},
+    )
+
+
+@pytest.mark.asyncio
+async def test_route_map_missing_pattern_raises(spec_path) -> None:  # type: ignore[no-untyped-def]
+    from bg_mcpcore.profile.loader import ProfileError
+
+    profile = _openapi_profile(spec_path, [{"type": "exclude"}])
+    with pytest.raises(ProfileError, match="route_maps entry requires a 'pattern'"):
+        await build_app_from_profile(
+            profile, _Demo(environment="development", auth_mode="none"), version="1.0.0"
+        )
+
+
+@pytest.mark.asyncio
+async def test_route_map_unknown_type_raises(spec_path) -> None:  # type: ignore[no-untyped-def]
+    from bg_mcpcore.profile.loader import ProfileError
+
+    profile = _openapi_profile(spec_path, [{"pattern": "^/items$", "type": "bogus"}])
+    with pytest.raises(ProfileError, match="Unknown route_map type"):
+        await build_app_from_profile(
+            profile, _Demo(environment="development", auth_mode="none"), version="1.0.0"
+        )

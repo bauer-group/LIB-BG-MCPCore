@@ -53,4 +53,13 @@ def warn_role_audit_only() -> None:
     )
 
 
-__all__ = ["print_banner", "warn_no_auth", "warn_role_audit_only"]
+def warn_entra_open_tenants() -> None:
+    """Loud warning when AUTH_MODE=entra-multi runs without a tenant allowlist."""
+    console.print(
+        "\n[bold black on yellow]  WARNING: AUTH_MODE=entra-multi with no ENTRA_ALLOWED_TENANTS  [/bold black on yellow]"
+        "\n[yellow]Access tokens from ANY Microsoft Entra tenant are accepted. Set "
+        "ENTRA_ALLOWED_TENANTS to restrict access to your own tenant(s).[/yellow]\n"
+    )
+
+
+__all__ = ["print_banner", "warn_entra_open_tenants", "warn_no_auth", "warn_role_audit_only"]

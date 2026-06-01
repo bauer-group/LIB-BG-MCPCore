@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+from pydantic import SecretStr
 
 from bg_mcpcore.plugins import build_auth_middleware, build_auth_provider
 from bg_mcpcore.profile.loader import ProfileError
@@ -92,3 +93,31 @@ def test_auth_middleware_wired_for_entra_multi() -> None:
 
 def test_auth_middleware_empty_for_none_mode() -> None:
     assert build_auth_middleware(SimpleNamespace(auth_mode="none")) == []
+
+
+# ── generic OIDC (core) ──────────────────────────────────────────────────────
+
+
+def test_generic_oidc_explicit_endpoints_require_issuer(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # Explicit-endpoint mode cannot derive the issuer from the authorize URL, so
+    # an unset OIDC_ISSUER must fail fast rather than mint a verifier that silently
+    # rejects every token (regression for the old wrong string-chop fallback).
+    from bg_mcpcore.auth.generic_oidc import build_generic_oidc_provider
+
+    settings = SimpleNamespace(
+        oidc_client_id="cid",
+        oidc_client_secret=SecretStr("csecret"),
+        oidc_scopes="openid",
+        public_base_url="https://mcp.example.com",
+        auth_jwt_signing_key=SecretStr("a-strong-32-byte-signing-key-value-123456"),
+        auth_redis_url=None,
+        auth_storage_encryption_key=None,
+        auth_disk_storage_path=str(tmp_path / "oauth"),
+        oidc_discovery_url=None,
+        oidc_auth_uri="https://idp/realms/r/protocol/openid-connect/auth",
+        oidc_token_uri="https://idp/realms/r/protocol/openid-connect/token",
+        oidc_jwks_uri="https://idp/realms/r/protocol/openid-connect/certs",
+        oidc_issuer=None,
+    )
+    with pytest.raises(ValueError, match="OIDC_ISSUER"):
+        build_generic_oidc_provider(settings)  # type: ignore[arg-type]

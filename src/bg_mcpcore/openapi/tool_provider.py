@@ -162,10 +162,17 @@ class OpenApiToolProvider:
         strip_re = _strip_prefix_for_match(self._cfg.strip_path_prefix)
 
         type_map = {"resource": MCPType.RESOURCE, "exclude": MCPType.EXCLUDE, "tool": MCPType.TOOL}
-        route_maps = [
-            RouteMap(pattern=rm["pattern"], mcp_type=type_map[rm.get("type", "tool")])
-            for rm in self._cfg.route_maps
-        ]
+        route_maps = []
+        for rm in self._cfg.route_maps:
+            pattern = rm.get("pattern")
+            if not pattern:
+                raise ProfileError("Each tools.route_maps entry requires a 'pattern'")
+            rtype = rm.get("type", "tool")
+            if rtype not in type_map:
+                raise ProfileError(
+                    f"Unknown route_map type {rtype!r}; expected one of {sorted(type_map)}"
+                )
+            route_maps.append(RouteMap(pattern=pattern, mcp_type=type_map[rtype]))
 
         annotations_enabled = self._cfg.annotations == "by_http_method"
         descriptions = self._cfg.descriptions

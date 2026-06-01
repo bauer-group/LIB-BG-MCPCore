@@ -111,7 +111,18 @@ def build_generic_oidc_provider(settings: OidcSettings, inbound: Any | None = No
     from fastmcp.server.auth.oauth_proxy import OAuthProxy
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
-    issuer = settings.oidc_issuer or auth_uri.rsplit("/", 1)[0]
+    # The issuer must match the token's `iss` claim exactly. It cannot be reliably
+    # derived from the authorize URL (e.g. a Keycloak authorize endpoint sits several
+    # path segments below the issuer), so require it explicitly rather than minting a
+    # verifier that silently rejects every token. The discovery path above reads the
+    # issuer from IdP metadata, so this only applies to explicit-endpoint setups.
+    issuer = settings.oidc_issuer
+    if not issuer:
+        raise ValueError(
+            "Explicit-endpoint OIDC requires OIDC_ISSUER (the token issuer / 'iss' "
+            "claim); it cannot be derived from OIDC_AUTH_URI. Set OIDC_ISSUER, or use "
+            "OIDC_DISCOVERY_URL which reads the issuer from the IdP's metadata."
+        )
     token_verifier = JWTVerifier(jwks_uri=jwks_uri, issuer=issuer, required_scopes=scopes)
     kwargs = {
         "upstream_authorization_endpoint": auth_uri,
