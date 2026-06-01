@@ -87,4 +87,25 @@ async def test_profile_with_extensions_builds(tmp_path) -> None:  # type: ignore
     mcp = await build_app_from_profile(
         profile, _Demo(environment="development", auth_mode="none"), version="1.0.0"
     )
-    assert mcp is not None
+    # Strengthened: the prompt must actually be registered, not merely "built".
+    prompts = await mcp.list_prompts()
+    assert "greet" in {getattr(p, "name", "") for p in prompts}
+
+
+def test_prompt_dollar_escape_is_allowed(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # `$$` is string.Template's literal-$ escape and must not be read as a
+    # placeholder (regression: "cost is $$5" was rejected).
+    source = _write(
+        tmp_path,
+        {
+            "prompts": [
+                {
+                    "name": "price",
+                    "template": "cost is $$5 for ${item}",
+                    "arguments": [{"name": "item", "required": True}],
+                }
+            ]
+        },
+    )
+    cfg = load_config(source)  # must not raise
+    assert len(cfg.prompts) == 1

@@ -102,3 +102,105 @@ async def test_route_map_unknown_type_raises(spec_path) -> None:  # type: ignore
         await build_app_from_profile(
             profile, _Demo(environment="development", auth_mode="none"), version="1.0.0"
         )
+
+
+def test_normalize_spec_strips_prefix_and_drops_version_param() -> None:
+    from bg_mcpcore.openapi.tool_provider import _normalize_spec
+
+    spec = {
+        "openapi": "3.0.0",
+        "paths": {
+            "/rest/v3/short-urls": {
+                "get": {
+                    "operationId": "list",
+                    "parameters": [
+                        {"in": "path", "name": "version"},
+                        {"in": "query", "name": "q"},
+                    ],
+                }
+            }
+        },
+    }
+    out = _normalize_spec(spec, "/rest/v{version}")
+    assert "/short-urls" in out["paths"]
+    names = [p["name"] for p in out["paths"]["/short-urls"]["get"]["parameters"]]
+    assert "version" not in names  # the freed path param is dropped
+    assert "q" in names  # the query param survives
+
+
+@pytest.mark.asyncio
+async def test_sibling_external_refs_are_not_false_circular(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # A component file referencing a sibling in the SAME file (defs#/A -> defs#/B)
+    # is the standard modular-spec pattern and must not be flagged circular.
+    from bg_mcpcore.openapi.loader import load_spec
+
+    (tmp_path / "defs.json").write_text(
+        json.dumps(
+            {
+                "A": {"type": "object", "properties": {"b": {"$ref": "defs.json#/B"}}},
+                "B": {"type": "string"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "main.json").write_text(
+        json.dumps(
+            {
+                "openapi": "3.0.0",
+                "info": {"title": "t", "version": "1"},
+                "paths": {
+                    "/x": {
+                        "get": {
+                            "operationId": "getx",
+                            "responses": {
+                                "200": {
+                                    "description": "ok",
+                                    "content": {
+                                        "application/json": {"schema": {"$ref": "defs.json#/A"}}
+                                    },
+                                }
+                            },
+                        }
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    loaded = await load_spec(str(tmp_path / "main.json"))
+    assert "/x" in loaded.spec["paths"]
+
+
+@pytest.mark.asyncio
+async def test_true_circular_external_ref_is_detected(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # a.json#/X -> b.json#/Y -> a.json#/X is a genuine cycle and must be caught.
+    from bg_mcpcore.openapi.loader import SpecLoadError, load_spec
+
+    (tmp_path / "a.json").write_text(json.dumps({"X": {"$ref": "b.json#/Y"}}), encoding="utf-8")
+    (tmp_path / "b.json").write_text(json.dumps({"Y": {"$ref": "a.json#/X"}}), encoding="utf-8")
+    (tmp_path / "main.json").write_text(
+        json.dumps(
+            {
+                "openapi": "3.0.0",
+                "info": {"title": "t", "version": "1"},
+                "paths": {
+                    "/x": {
+                        "get": {
+                            "operationId": "g",
+                            "responses": {
+                                "200": {
+                                    "description": "ok",
+                                    "content": {
+                                        "application/json": {"schema": {"$ref": "a.json#/X"}}
+                                    },
+                                }
+                            },
+                        }
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(SpecLoadError, match="Circular"):
+        await load_spec(str(tmp_path / "main.json"))

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from bg_mcpcore.plugins import (
@@ -53,6 +55,37 @@ def test_schema_hint_key_is_ignored() -> None:
     over = {"$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json"}
     profile = load_profile(_profile_dict(**over), env={})  # type: ignore[arg-type]
     assert profile.id == "demo"
+
+
+def test_load_from_file_with_schema_hint(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # Loading from a real FILE (not a dict) is the path the examples use; the
+    # $schema strip must work there too.
+    path = tmp_path / "profile.json"
+    path.write_text(
+        json.dumps(
+            {
+                "$schema": "https://schemas.bauer-group.com/mcp-profile/v1.json",
+                "id": "demo",
+                "display_name": "Demo",
+                "tools": {"source": "registry", "include": ["bg.ping"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert load_profile(str(path)).id == "demo"
+
+
+def test_malformed_json_file_raises_profileerror(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    path = tmp_path / "bad.json"
+    path.write_text("{ not json", encoding="utf-8")
+    with pytest.raises(ProfileError, match="not valid JSON"):
+        load_profile(str(path))
+
+
+def test_directory_path_raises_profileerror(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # A directory is an OSError, which the loader must surface as ProfileError.
+    with pytest.raises(ProfileError):
+        load_profile(str(tmp_path))
 
 
 # ── inbound auth (closed set) ────────────────────────────────────────────────

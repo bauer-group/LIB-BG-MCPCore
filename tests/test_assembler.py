@@ -35,30 +35,78 @@ async def test_registry_profile_assembles_and_registers_tools() -> None:
     assert "ping" in names
 
 
-def test_make_cli_forwards_passthrough_kwargs() -> None:
-    # Regression: make_cli must accept and forward lifespan /
-    # extra_sensitive_fragments / extra_middleware to build_app_from_profile
-    # (the documented Tier-3 access-control seam) rather than raise TypeError.
-    import typer
-
+def test_make_cli_forwards_passthrough_to_build(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    # Regression: make_cli must actually FORWARD lifespan / extra_middleware /
+    # extra_sensitive_fragments to build_app_from_profile (the Tier-3 seam), not
+    # just accept them. Stub the build + transport so `serve` runs without a server.
+    import bg_mcpcore.cli as climod
     from bg_mcpcore import make_cli
+    from bg_mcpcore.settings import reset_settings_cache
 
+    for key, value in {"ENVIRONMENT": "development", "AUTH_MODE": "none", "MCP_DISPLAY_NAME": "T"}.items():
+        monkeypatch.setenv(key, value)
+    reset_settings_cache()
+
+    captured: dict[str, object] = {}
+
+    async def _fake_build(profile, settings, **kwargs):  # type: ignore[no-untyped-def]
+        captured.update(kwargs)
+        return object()
+
+    async def _fake_run(mcp, **kwargs):  # type: ignore[no-untyped-def]
+        return None
+
+    monkeypatch.setattr(climod, "build_app_from_profile", _fake_build)
+    monkeypatch.setattr(climod, "run_transport", _fake_run)
+
+    sentinel = object()
     profile = load_profile(
-        {
-            "id": "demo",
-            "display_name": "Demo",
-            "tools": {"source": "registry", "include": ["bg.ping"]},
-        },
+        {"id": "demo", "display_name": "Demo", "tools": {"source": "registry", "include": ["bg.ping"]}},
         env={},
     )
     cli = make_cli(
         profile,
-        version="1.0.0",
-        lifespan=None,
+        version="9.9.9",
+        extra_middleware=[sentinel],
         extra_sensitive_fragments=["x-secret"],
-        extra_middleware=[object()],
     )
-    assert isinstance(cli, typer.Typer)
+
+    from typer.testing import CliRunner
+
+    result = CliRunner().invoke(cli, [])  # no subcommand -> serve
+    reset_settings_cache()
+    assert result.exit_code == 0, result.output
+    assert captured["extra_middleware"] == [sentinel]
+    assert captured["extra_sensitive_fragments"] == ["x-secret"]
+    assert captured["version"] == "9.9.9"
+
+
+@pytest.mark.asyncio
+async def test_least_privilege_registry_source_gets_no_settings() -> None:
+    # Guardrail #4 enforced: a registry (non-python) source receives a
+    # settings-less ToolContext.
+    from bg_mcpcore.tools.registry import register_tool
+
+    seen: dict[str, object] = {}
+    register_tool("test.capture_ctx", lambda _mcp, ctx: seen.__setitem__("settings", ctx.settings))
+    profile = load_profile(
+        {"id": "d", "display_name": "D", "tools": {"source": "registry", "include": ["test.capture_ctx"]}},
+        env={},
+    )
+    await build_app_from_profile(profile, _dev_settings(), version="1.0.0")
+    assert seen["settings"] is None
+
+
+@pytest.mark.asyncio
+async def test_unknown_registry_tool_raises_profileerror() -> None:
+    from bg_mcpcore.profile.loader import ProfileError
+
+    profile = load_profile(
+        {"id": "d", "display_name": "D", "tools": {"source": "registry", "include": ["does.not.exist"]}},
+        env={},
+    )
+    with pytest.raises(ProfileError, match="Unknown registry tool"):
+        await build_app_from_profile(profile, _dev_settings(), version="1.0.0")
 
 
 @pytest.mark.asyncio
