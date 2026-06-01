@@ -39,6 +39,44 @@ def test_missing_env_var_fails_closed() -> None:
         load_profile(_profile_dict(backend={"base_url": "${env:DEMO_URL}"}), env={})
 
 
+def test_env_default_used_when_unset() -> None:
+    profile = load_profile(
+        _profile_dict(backend={"base_url": "${env:DEMO_URL:-https://fallback.example.com}"}),
+        env={},
+    )
+    assert profile.backend is not None
+    assert profile.backend.base_url == "https://fallback.example.com"
+
+
+def test_env_default_overridden_when_set() -> None:
+    profile = load_profile(
+        _profile_dict(backend={"base_url": "${env:DEMO_URL:-https://fallback.example.com}"}),
+        env={"DEMO_URL": "https://override.example.com"},
+    )
+    assert profile.backend is not None
+    assert profile.backend.base_url == "https://override.example.com"
+
+
+def test_env_default_used_when_empty() -> None:
+    # Shell ':-' semantics: an empty (not just unset) value also falls back.
+    profile = load_profile(
+        _profile_dict(backend={"base_url": "${env:DEMO_URL:-https://fallback.example.com}"}),
+        env={"DEMO_URL": ""},
+    )
+    assert profile.backend is not None
+    assert profile.backend.base_url == "https://fallback.example.com"
+
+
+def test_env_no_default_set_but_empty_preserved() -> None:
+    # No ':-default' given + var set-but-empty → legacy behaviour: keep "".
+    profile = load_profile(
+        _profile_dict(backend={"base_url": "https://demo", "api_base_path": "${env:DEMO_PATH}"}),
+        env={"DEMO_PATH": ""},
+    )
+    assert profile.backend is not None
+    assert profile.backend.api_base_path == ""
+
+
 def test_invalid_profile_raises() -> None:
     with pytest.raises(ProfileError, match="Invalid profile"):
         load_profile({"id": "x"})  # missing display_name + tools

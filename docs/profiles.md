@@ -9,6 +9,17 @@ shipped at `bg_mcpcore/profile/schema.json`). It describes **structure**, never
 secrets: strings interpolate `${env:VAR}` (fail-closed if the variable is unset)
 and outbound credentials are referenced by env-var name, never inlined.
 
+For an optional knob with a sensible default, use shell-style `${env:VAR:-default}`:
+the default applies when `VAR` is unset **or** empty, while an explicit value still
+overrides it — so a documented-but-optional setting never silently becomes a no-op.
+Defaults are literal and intended for **non-secret** config (URLs, paths) only;
+secrets keep using `value_from_env` (no default, always fail-closed).
+
+```jsonc
+// unset SHLINK_OPENAPI_URL → the baked-in spec; set it → that override wins
+"spec": { "source": "${env:SHLINK_OPENAPI_URL:-file:///app/openapi/shlink.json}" }
+```
+
 The top-level model is **strict** (`extra="forbid"`) so a typo'd key is a load
 error; the source-specific sub-blocks (OpenAPI `spec`, `route_maps`, …) allow
 extras so a profile stays valid before the relevant extra is installed.

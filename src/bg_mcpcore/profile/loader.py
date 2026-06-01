@@ -1,9 +1,14 @@
 """Profile loading + ``${env:VAR}`` interpolation (fail-closed).
 
 Non-secret interpolation (``base_url: "${env:SHLINK_URL}"``) is resolved here.
-Secrets are NOT pulled into the profile object — the outbound-auth resolver reads
-``value_from_env`` directly at build time, so credentials never sit in the parsed
-profile. A referenced env var that is unset raises ``ProfileError`` (guardrail #5).
+A referenced env var that is unset raises ``ProfileError`` (guardrail #5) — unless
+a default is supplied with shell-style ``:-`` syntax: ``"${env:SHLINK_OPENAPI_URL:-
+file:///app/openapi/shlink.json}"`` resolves to the default when the var is unset
+or empty, while still honouring an explicit override (so a documented-but-optional
+knob does not become a silent no-op). Defaults are literal and intended for
+NON-SECRET config (URLs, paths); secrets are NOT pulled into the profile object —
+the outbound-auth resolver reads ``value_from_env`` directly at build time (with no
+default), so credentials never sit in the parsed profile and stay fail-closed.
 """
 
 from __future__ import annotations
@@ -18,7 +23,10 @@ from pydantic import ValidationError
 
 from .models import Profile
 
-_ENV_RE = re.compile(r"\$\{env:([A-Za-z_][A-Za-z0-9_]*)\}")
+# ${env:VAR} (fail-closed if unset) or ${env:VAR:-default} (shell-style default
+# used when VAR is unset or empty). The default runs up to the closing brace, so
+# it cannot itself contain '}'.
+_ENV_RE = re.compile(r"\$\{env:([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
 
 
 class ProfileError(RuntimeError):
@@ -30,13 +38,19 @@ def _interpolate(value: Any, env: Mapping[str, str]) -> Any:
 
         def _repl(match: re.Match[str]) -> str:
             name = match.group(1)
+            default = match.group(2)  # None when no ':-default' was given
             resolved = env.get(name)
-            if resolved is None:
-                raise ProfileError(
-                    f"Profile references ${{env:{name}}} but environment variable "
-                    f"{name} is not set"
-                )
-            return resolved
+            if resolved:
+                return resolved
+            # Unset or empty from here on.
+            if default is not None:
+                return default  # ${env:VAR:-default} → shell ':-' semantics
+            if resolved is not None:
+                return resolved  # set-but-empty, no default → preserve "" (legacy)
+            raise ProfileError(
+                f"Profile references ${{env:{name}}} but environment variable "
+                f"{name} is not set"
+            )
 
         return _ENV_RE.sub(_repl, value)
     if isinstance(value, dict):
