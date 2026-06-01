@@ -34,6 +34,7 @@ __email__ = "info@bauer-group.com"
 # Public name -> the submodule that exports it. Lazily resolved on first access.
 _LAZY: dict[str, str] = {
     "build_app_from_profile": "app",
+    "build_gateway": "gateway",
     "make_cli": "cli",
     "UpstreamClient": "http",
     "Profile": "profile",
@@ -119,6 +120,7 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
         discover_endpoints as discover_endpoints,
     )
     from .cli import make_cli as make_cli
+    from .gateway import build_gateway as build_gateway
     from .http import UpstreamClient as UpstreamClient
     from .observability import (
         get_logger as get_logger,
@@ -236,6 +238,7 @@ __all__ = [
     "build_app_from_profile",
     "build_auth_provider",
     "build_client_storage",
+    "build_gateway",
     "build_generic_oidc_provider",
     "build_outbound_resolver",
     "build_rate_limit_middleware",
