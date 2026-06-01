@@ -80,11 +80,17 @@ async def build_app_from_profile(
             user_agent=profile.backend.user_agent,
         )
 
-    ctx = ToolContext(settings=settings, client=client, logger=get_logger(f"bg-mcpcore.{profile.id}"))
+    tool_logger = get_logger(f"bg-mcpcore.{profile.id}")
+    # Least-privilege (guardrail #4): only the `python` escape hatch — the server's
+    # OWN trusted code — receives settings (with its SecretStr fields). OpenAPI,
+    # registry, and third-party tool sources get a settings-less context, so the
+    # boundary is enforced rather than merely documented.
+    ctx_full = ToolContext(settings=settings, client=client, logger=tool_logger)
+    ctx_scoped = ToolContext(settings=None, client=client, logger=tool_logger)
 
-    providers = [build_tool_provider(tc) for tc in profile.tool_sources]
-    constructing = [p for p in providers if hasattr(p, "construct")]
-    registering = [p for p in providers if hasattr(p, "register")]
+    built = [(tc, build_tool_provider(tc)) for tc in profile.tool_sources]
+    constructing = [(tc, p) for tc, p in built if hasattr(p, "construct")]
+    registering = [(tc, p) for tc, p in built if hasattr(p, "register")]
     if len(constructing) > 1:
         raise ProfileError("At most one constructing tool source (e.g. openapi) is allowed")
 
@@ -105,14 +111,14 @@ async def build_app_from_profile(
 
     mcp: FastMCP
     if constructing:
-        mcp = await constructing[0].construct(
+        mcp = await constructing[0][1].construct(
             name=settings.mcp_display_name,
             instructions=profile.instructions,
             auth=auth_provider,
             lifespan=effective_lifespan,
             icon_url=icon_url,
             website_url=website_url,
-            ctx=ctx,
+            ctx=ctx_scoped,
         )
     else:
         kwargs: dict[str, Any] = {
@@ -139,8 +145,9 @@ async def build_app_from_profile(
         mcp.add_middleware(middleware)
 
     total = 0
-    for provider in registering:
-        total += await provider.register(mcp, ctx)
+    for tc, provider in registering:
+        provider_ctx = ctx_full if tc.source == "python" else ctx_scoped
+        total += await provider.register(mcp, provider_ctx)
 
     # Layer config-driven prompts + resources on top of the tool surface.
     if profile.extensions is not None:

@@ -181,7 +181,13 @@ class _RegistryToolProvider:
         from .tools.registry import get_tool
 
         for name in self._include:
-            get_tool(name)(mcp, ctx)
+            try:
+                factory = get_tool(name)
+            except KeyError as exc:
+                # Surface an unknown registry tool as ProfileError, consistent with
+                # every other profile-driven failure (get_tool raises bare KeyError).
+                raise ProfileError(str(exc).strip('"')) from exc
+            factory(mcp, ctx)
         return len(self._include)
 
 

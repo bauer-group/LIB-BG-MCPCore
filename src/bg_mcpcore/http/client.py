@@ -20,6 +20,7 @@ from .retry import (
     DEFAULT_BACKOFF_BASE,
     DEFAULT_BACKOFF_MAX,
     DEFAULT_MAX_RETRIES,
+    IDEMPOTENT_METHODS,
     RETRYABLE_STATUSES,
     parse_retry_after,
     sleep_backoff,
@@ -48,7 +49,11 @@ class UpstreamClient:
         self._max_retries = max_retries
         self._backoff_base = backoff_base
         self._backoff_max = backoff_max
-        full_base = base_url.rstrip("/") + api_base_path
+        # Normalise api_base_path to a leading-slash, no-trailing-slash suffix so a
+        # value written without a leading slash ("rest/v1") does not fuse onto the
+        # host ("https://hostrest/v1"). Empty stays empty.
+        trimmed = api_base_path.strip("/")
+        full_base = base_url.rstrip("/") + (f"/{trimmed}" if trimmed else "")
         headers = {"User-Agent": user_agent, **self._auth.default_headers()}
         self._client = httpx.AsyncClient(
             base_url=full_base,
@@ -76,19 +81,30 @@ class UpstreamClient:
         """Issue a request, merging per-call auth headers and retrying transients."""
         merged = dict(headers or {})
         merged.update(await self._auth.auth_headers(ctx))
+        # A non-idempotent method (POST/PATCH) must not be retried on a retryable
+        # STATUS — the upstream may have already applied it before returning 5xx,
+        # so re-issuing risks a duplicate side effect. Such methods are still
+        # retried on a connect-phase TransportError, where the request provably
+        # never reached the server.
+        idempotent = method.upper() in IDEMPOTENT_METHODS
         attempt = 0
         while True:
             try:
                 response = await self._client.request(
                     method, path, headers=merged or None, **kwargs
                 )
-            except httpx.TransportError:
-                if attempt < self._max_retries:
+            except httpx.TransportError as exc:
+                connect_only = isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout))
+                if (idempotent or connect_only) and attempt < self._max_retries:
                     await sleep_backoff(attempt, base=self._backoff_base, max_delay=self._backoff_max)
                     attempt += 1
                     continue
                 raise
-            if response.status_code in RETRYABLE_STATUSES and attempt < self._max_retries:
+            if (
+                response.status_code in RETRYABLE_STATUSES
+                and idempotent
+                and attempt < self._max_retries
+            ):
                 await sleep_backoff(
                     attempt,
                     base=self._backoff_base,

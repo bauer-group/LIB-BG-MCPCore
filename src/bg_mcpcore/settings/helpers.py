@@ -18,7 +18,7 @@ def split_csv(raw: str | list[str] | None) -> list[str]:
     if raw is None or raw == "":
         return []
     if isinstance(raw, list):
-        return [item.strip() for item in raw if str(item).strip()]
+        return [str(item).strip() for item in raw if str(item).strip()]
     return [item.strip() for item in str(raw).split(",") if item.strip()]
 
 
@@ -27,7 +27,7 @@ def has_value(value: object) -> bool:
     if value is None:
         return False
     if isinstance(value, SecretStr):
-        return bool(value.get_secret_value())
+        return bool(value.get_secret_value().strip())
     if isinstance(value, str):
         return bool(value.strip())
     return bool(value)
@@ -70,8 +70,11 @@ def validate_persistence(settings: PersistenceSettings) -> None:
                 "(set ENVIRONMENT=development if this is intentional)"
             )
     else:
-        signing = settings.auth_jwt_signing_key.get_secret_value()
-        if not signing or signing.startswith("CHANGE_ME"):
+        # Strip before the check: a whitespace-only key is as unusable as an empty
+        # one and must not satisfy the invariant. Casefold the placeholder test so
+        # a lowercase "change_me..." is rejected too.
+        signing = settings.auth_jwt_signing_key.get_secret_value().strip()
+        if not signing or signing.upper().startswith("CHANGE_ME"):
             raise ValueError(
                 "AUTH_JWT_SIGNING_KEY is required and must not be a CHANGE_ME placeholder"
             )

@@ -142,7 +142,17 @@ _KEYCLOAK = _Spec(
     f"{_BASE}.keycloak:KeycloakAuthProvider",
     (_Field("realm_url"), _Field("audience", required=False)),
 )
-_DESCOPE = _Spec(f"{_BASE}.descope:DescopeProvider", (_Field("project_id"),))
+# DescopeProvider requires EITHER config_url (new API) OR both project_id +
+# descope_base_url (legacy API), so all three are optional here and the provider
+# validates the combination (a clear error if none is supplied).
+_DESCOPE = _Spec(
+    f"{_BASE}.descope:DescopeProvider",
+    (
+        _Field("config_url", required=False),
+        _Field("project_id", required=False),
+        _Field("descope_base_url", required=False),
+    ),
+)
 _PROPELAUTH = _Spec(
     f"{_BASE}.propelauth:PropelAuthProvider",
     (

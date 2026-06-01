@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import random
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 
 import httpx
 
@@ -16,21 +18,41 @@ import httpx
 # never retried.
 RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
 
+# Methods safe to retry on a retryable STATUS: re-issuing them cannot cause a
+# duplicate side effect. POST/PATCH are excluded — the upstream may have already
+# applied the first request before returning 5xx (see UpstreamClient.request).
+IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE"})
+
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_BACKOFF_BASE = 0.25
 DEFAULT_BACKOFF_MAX = 4.0
 
 
 def parse_retry_after(response: httpx.Response) -> float | None:
-    """Read a Retry-After header (delta-seconds form) if present and sane."""
+    """Read a Retry-After header if present and sane (delta-seconds OR HTTP-date).
+
+    RFC 9110 allows both ``Retry-After: 120`` and ``Retry-After: Wed, 21 Oct 2026
+    07:28:00 GMT``; Cloudflare/nginx commonly emit the date form on 429/503.
+    """
     raw = response.headers.get("retry-after")
     if not raw:
         return None
     try:
         seconds = float(raw)
+        return seconds if seconds >= 0 else None
     except ValueError:
+        pass
+    # HTTP-date form: parse and return the delay until that instant.
+    try:
+        when = parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
         return None
-    return seconds if seconds >= 0 else None
+    if when is None:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=UTC)
+    delay = (when - datetime.now(UTC)).total_seconds()
+    return max(0.0, delay)
 
 
 async def sleep_backoff(

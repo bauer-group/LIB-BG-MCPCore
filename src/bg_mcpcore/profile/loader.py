@@ -70,15 +70,16 @@ def load_profile(
         except json.JSONDecodeError as exc:
             raise ProfileError(f"Profile is not valid JSON: {exc}") from exc
 
-    if interpolate_env:
-        data = _interpolate(data, env)
-
     if isinstance(data, dict):
         # `$schema` is a JSON-Schema editor/validation hint (it points profiles at
         # mcp-profile/v1.json for IDE autocompletion), not profile data — drop it
-        # so the strict model does not reject an otherwise-valid profile. Copying
-        # avoids mutating a dict passed in by the caller.
+        # so the strict model does not reject an otherwise-valid profile. Strip it
+        # BEFORE interpolation so a ${env:VAR} inside the (discarded) schema URL
+        # never fails closed on an unset var. Copying avoids mutating a caller dict.
         data = {key: item for key, item in data.items() if key != "$schema"}
+
+    if interpolate_env:
+        data = _interpolate(data, env)
 
     try:
         return Profile.model_validate(data)
@@ -98,6 +99,10 @@ def _read_source(source: str | Path) -> str:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         raise ProfileError(f"Profile file not found: {path}") from exc
+    except OSError as exc:
+        # A directory, permission error, or malformed file:// path — honour the
+        # documented contract that any read failure surfaces as ProfileError.
+        raise ProfileError(f"Profile file could not be read: {path} ({exc})") from exc
 
 
 __all__ = ["ProfileError", "load_profile"]

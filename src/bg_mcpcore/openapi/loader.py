@@ -115,8 +115,14 @@ async def _resolve_external_refs(
         if isinstance(ref, str) and ref and not ref.startswith("#"):
             ref_path, _, fragment = ref.partition("#")
             target_uri = _resolve_ref_uri(current_uri, ref_path)
-            if target_uri in seen:
-                chain = " -> ".join((*seen, target_uri))
+            # Key the cycle guard on the full ref identity (file + fragment), not the
+            # file alone: a component file legitimately holding sibling refs
+            # (defs.json#/A -> defs.json#/B) is the standard modular-spec pattern and
+            # must not be flagged as circular. A true A->B->A loop still revisits the
+            # same (uri, fragment) key and is caught.
+            ref_key = f"{target_uri}#{fragment}"
+            if ref_key in seen:
+                chain = " -> ".join((*seen, ref_key))
                 raise SpecLoadError(f"Circular external $ref chain: {chain}")
             sub = await _fetch_and_parse(target_uri, timeout=timeout)
             if fragment:
@@ -132,7 +138,7 @@ async def _resolve_external_refs(
                         )
                     sub = sub[part]
             return await _resolve_external_refs(
-                sub, target_uri, timeout=timeout, seen=(*seen, target_uri)
+                sub, target_uri, timeout=timeout, seen=(*seen, ref_key)
             )
         return {
             key: await _resolve_external_refs(value, current_uri, timeout=timeout, seen=seen)

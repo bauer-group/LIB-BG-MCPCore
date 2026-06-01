@@ -161,7 +161,12 @@ class OpenApiToolProvider:
         spec = _normalize_spec(loaded.spec, self._cfg.strip_path_prefix)
         strip_re = _strip_prefix_for_match(self._cfg.strip_path_prefix)
 
-        type_map = {"resource": MCPType.RESOURCE, "exclude": MCPType.EXCLUDE, "tool": MCPType.TOOL}
+        type_map = {
+            "resource": MCPType.RESOURCE,
+            "resource_template": MCPType.RESOURCE_TEMPLATE,
+            "exclude": MCPType.EXCLUDE,
+            "tool": MCPType.TOOL,
+        }
         route_maps = []
         for rm in self._cfg.route_maps:
             pattern = rm.get("pattern")

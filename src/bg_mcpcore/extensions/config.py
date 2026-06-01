@@ -84,8 +84,12 @@ class PromptConfig(_StrictBase):
 
     @model_validator(mode="after")
     def _placeholders_match_arguments(self) -> PromptConfig:
-        placeholders = set(re.findall(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}", self.template))
-        placeholders |= set(re.findall(r"\$([a-zA-Z_][a-zA-Z0-9_]*)", self.template))
+        # string.Template uses `$$` as a literal-`$` escape; drop those first so a
+        # template like "cost is $$5 for ${item}" is not read as a `$5`/`item` pair
+        # and "$$word" (renders to a literal "$word") is not flagged as a placeholder.
+        scan = self.template.replace("$$", "")
+        placeholders = set(re.findall(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}", scan))
+        placeholders |= set(re.findall(r"\$([a-zA-Z_][a-zA-Z0-9_]*)", scan))
         declared = {a.name for a in self.arguments}
         if placeholders - declared:
             raise ValueError(
