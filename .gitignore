@@ -49,8 +49,7 @@ ENV/
 /site
 
 # uv — a library is consumed across environments, so we don't pin a lockfile
-# (the project is pip-native; uv is only a local convenience). Matches the
-# NocoDB_SimpleClient blueprint.
+# (the project is pip-native; uv is only a local convenience).
 uv.lock
 
 # PyPI
