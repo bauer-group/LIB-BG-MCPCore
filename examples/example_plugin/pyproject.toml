@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bg-mcpcore-echo"
+version = "0.1.0"
+description = "Example bg-mcpcore plugin — a custom 'echo' tool source registered via an entry point"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.14"
+dependencies = ["bg-mcpcore"]
+
+# This is the whole extensibility contract: declare a name under the
+# bg_mcpcore.tool_sources group pointing at a factory. After `pip install`,
+# any profile can use `{"source": "echo"}` — bg-mcpcore discovers it lazily.
+[project.entry-points."bg_mcpcore.tool_sources"]
+echo = "bg_mcpcore_echo:create_echo_source"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bg_mcpcore_echo"]

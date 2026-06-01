@@ -10,6 +10,11 @@ together they cover all three complexity tiers (see the
 | [`openapi_server/`](openapi_server/) | **1** — pure config | tools generated from an OpenAPI spec; the surface shaped declaratively |
 | [`openapi_with_python_tools/`](openapi_with_python_tools/) | **2** — config + a little Python | an OpenAPI surface PLUS a few hand-written composite tools (multi-source `tools`) |
 | [`python_tools_server/`](python_tools_server/) | **3** — mostly Python | hand-written tools + a per-user on-behalf-of outbound resolver (fail-closed) — the Zammad shape |
+| [`gateway_server/`](gateway_server/) | — (compose) | `build_gateway` mounts N profiles under name prefixes on ONE endpoint (central tool availability) |
+| [`example_plugin/`](example_plugin/) | — (extend) | a pip-installable package adding a custom `tool_source` via an entry point — extensibility without a core edit |
+
+New server from scratch? `bg-mcpcore new <name>` scaffolds a Tier-1 skeleton
+(profile + entrypoint + config + smoke test) you fill in.
 
 ## Running any example
 
