@@ -180,7 +180,10 @@ markers = [
 
 [tool.coverage.run]
 source = ["src/bg_mcpcore"]
-omit = ["tests/*", "*/__init__.py"]
+# Examples + scripts are illustrative, not library code; they are never imported
+# by the test suite and must not drag the measured coverage down (the CI gate
+# runs `--cov=.` over the whole checkout).
+omit = ["tests/*", "*/__init__.py", "examples/*", "scripts/*"]
 
 [tool.coverage.report]
 fail_under = 60

@@ -1,0 +1,40 @@
+# Gitleaks configuration for bg-mcpcore.
+# Uses the default ruleset plus an allowlist so test fixtures, examples, and docs
+# (which contain dummy signing keys, fake tokens, and ${env:...} placeholders)
+# are not flagged as real leaks. Real secrets never live in the repo — runtime
+# secrets come from env vars / a secret manager, referenced by value_from_env.
+
+title = "Gitleaks Config for bg-mcpcore"
+
+[extend]
+# Inherit gitleaks' default rules; only add allowlisting below.
+
+[allowlist]
+description = "Allow test fixtures, examples, and documentation"
+
+# Non-product paths whose 'secrets' are dummy test data.
+paths = [
+    '''tests/.*''',
+    '''examples/.*''',
+    '''docs/.*''',
+    '''.*\.md''',
+    '''.*\.MD''',
+]
+
+# Common test/example secret shapes.
+regexes = [
+    '''(?i)CHANGE_ME[_A-Z0-9]*''',
+    '''\$\{env:[A-Z0-9_]+\}''',
+    '''(?i)(dummy|fake|placeholder|example|test)[-_]?(secret|token|key|password)''',
+]
+
+# Words that mark a value as test/example content.
+stopwords = [
+    "test",
+    "example",
+    "dummy",
+    "fake",
+    "placeholder",
+    "mock",
+    "change_me",
+]

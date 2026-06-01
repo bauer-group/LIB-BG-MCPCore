@@ -14,72 +14,208 @@ Design pillars:
     * Secure — fail-closed auth invariants are enforced in core and cannot be
       switched off by a profile.
 
-The public surface grows per implementation phase. Phase 1 exposes the lifted
-infrastructure (logging, banner, sentry, rate limiting, operational routes,
-transport runner, encrypted OAuth-state storage, generic OIDC). The profile
-engine (load_profile / build_app_from_profile / make_cli) and BaseMcpSettings
-arrive in Phases 2-3.
+The public API is re-exported here but resolved LAZILY (PEP 562 ``__getattr__``):
+``import bg_mcpcore`` does not eagerly pull in fastmcp + every extra just to read
+``__version__`` or load the [testkit] pytest plugin. ``from bg_mcpcore import X``
+imports only X's submodule on first access.
 
 MIT License — Copyright (c) 2026 BAUER GROUP.
 """
 
 from __future__ import annotations
 
-from .app import build_app_from_profile
-from .auth import (
-    OIDCDiscoveryError,
-    build_client_storage,
-    build_generic_oidc_provider,
-    discover_endpoints,
-)
-from .auth.resolvers import (
-    AuthHeaderSource,
-    BearerEnvResolver,
-    NoAuthResolver,
-    StaticHeaderResolver,
-)
-from .cli import make_cli
-from .http import UpstreamClient
-from .observability import (
-    get_logger,
-    init_sentry,
-    now_iso,
-    print_banner,
-    setup_logging,
-    warn_no_auth,
-    warn_role_audit_only,
-)
-from .plugins import build_auth_provider, build_outbound_resolver, build_tool_provider
-from .profile import Profile, ProfileError, load_profile
-from .server import (
-    build_rate_limit_middleware,
-    patch_dual_stack_socket,
-    register_healthz_route,
-    register_index_route,
-    register_logo_route,
-    resolve_client_id,
-    run_transport,
-)
-from .settings import (
-    BaseMcpSettings,
-    Environment,
-    get_settings,
-    has_value,
-    split_csv,
-    validate_fernet_key,
-    validate_persistence,
-)
-from .tools import (
-    ConstructingToolProvider,
-    ToolContext,
-    ToolProvider,
-    available_tools,
-    register_tool,
-)
+import importlib
+from typing import TYPE_CHECKING
 
 __version__ = "0.1.0"
 __author__ = "BAUER GROUP"
 __email__ = "info@bauer-group.com"
+
+# Public name -> the submodule that exports it. Lazily resolved on first access.
+_LAZY: dict[str, str] = {
+    "build_app_from_profile": "app",
+    "make_cli": "cli",
+    "UpstreamClient": "http",
+    "Profile": "profile",
+    "ProfileError": "profile",
+    "load_profile": "profile",
+    "OIDCDiscoveryError": "auth",
+    "build_client_storage": "auth",
+    "build_generic_oidc_provider": "auth",
+    "discover_endpoints": "auth",
+    "AuthHeaderSource": "auth",
+    "BearerEnvResolver": "auth",
+    "NoAuthResolver": "auth",
+    "StaticHeaderResolver": "auth",
+    "get_logger": "observability",
+    "init_sentry": "observability",
+    "now_iso": "observability",
+    "print_banner": "observability",
+    "setup_logging": "observability",
+    "warn_no_auth": "observability",
+    "warn_role_audit_only": "observability",
+    "build_auth_provider": "plugins",
+    "build_outbound_resolver": "plugins",
+    "build_tool_provider": "plugins",
+    "build_rate_limit_middleware": "server",
+    "patch_dual_stack_socket": "server",
+    "register_healthz_route": "server",
+    "register_index_route": "server",
+    "register_logo_route": "server",
+    "resolve_client_id": "server",
+    "run_transport": "server",
+    "BaseMcpSettings": "settings",
+    "Environment": "settings",
+    "get_settings": "settings",
+    "has_value": "settings",
+    "split_csv": "settings",
+    "validate_fernet_key": "settings",
+    "validate_persistence": "settings",
+    "ConstructingToolProvider": "tools",
+    "ToolContext": "tools",
+    "ToolProvider": "tools",
+    "available_tools": "tools",
+    "register_tool": "tools",
+}
+
+
+def __getattr__(name: str) -> object:
+    submodule = _LAZY.get(name)
+    if submodule is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(f"{__name__}.{submodule}"), name)
+    globals()[name] = value  # cache: __getattr__ runs at most once per name
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(__all__)
+
+
+if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
+    from .app import build_app_from_profile as build_app_from_profile
+    from .auth import (
+        AuthHeaderSource as AuthHeaderSource,
+    )
+    from .auth import (
+        BearerEnvResolver as BearerEnvResolver,
+    )
+    from .auth import (
+        NoAuthResolver as NoAuthResolver,
+    )
+    from .auth import (
+        OIDCDiscoveryError as OIDCDiscoveryError,
+    )
+    from .auth import (
+        StaticHeaderResolver as StaticHeaderResolver,
+    )
+    from .auth import (
+        build_client_storage as build_client_storage,
+    )
+    from .auth import (
+        build_generic_oidc_provider as build_generic_oidc_provider,
+    )
+    from .auth import (
+        discover_endpoints as discover_endpoints,
+    )
+    from .cli import make_cli as make_cli
+    from .http import UpstreamClient as UpstreamClient
+    from .observability import (
+        get_logger as get_logger,
+    )
+    from .observability import (
+        init_sentry as init_sentry,
+    )
+    from .observability import (
+        now_iso as now_iso,
+    )
+    from .observability import (
+        print_banner as print_banner,
+    )
+    from .observability import (
+        setup_logging as setup_logging,
+    )
+    from .observability import (
+        warn_no_auth as warn_no_auth,
+    )
+    from .observability import (
+        warn_role_audit_only as warn_role_audit_only,
+    )
+    from .plugins import (
+        build_auth_provider as build_auth_provider,
+    )
+    from .plugins import (
+        build_outbound_resolver as build_outbound_resolver,
+    )
+    from .plugins import (
+        build_tool_provider as build_tool_provider,
+    )
+    from .profile import (
+        Profile as Profile,
+    )
+    from .profile import (
+        ProfileError as ProfileError,
+    )
+    from .profile import (
+        load_profile as load_profile,
+    )
+    from .server import (
+        build_rate_limit_middleware as build_rate_limit_middleware,
+    )
+    from .server import (
+        patch_dual_stack_socket as patch_dual_stack_socket,
+    )
+    from .server import (
+        register_healthz_route as register_healthz_route,
+    )
+    from .server import (
+        register_index_route as register_index_route,
+    )
+    from .server import (
+        register_logo_route as register_logo_route,
+    )
+    from .server import (
+        resolve_client_id as resolve_client_id,
+    )
+    from .server import (
+        run_transport as run_transport,
+    )
+    from .settings import (
+        BaseMcpSettings as BaseMcpSettings,
+    )
+    from .settings import (
+        Environment as Environment,
+    )
+    from .settings import (
+        get_settings as get_settings,
+    )
+    from .settings import (
+        has_value as has_value,
+    )
+    from .settings import (
+        split_csv as split_csv,
+    )
+    from .settings import (
+        validate_fernet_key as validate_fernet_key,
+    )
+    from .settings import (
+        validate_persistence as validate_persistence,
+    )
+    from .tools import (
+        ConstructingToolProvider as ConstructingToolProvider,
+    )
+    from .tools import (
+        ToolContext as ToolContext,
+    )
+    from .tools import (
+        ToolProvider as ToolProvider,
+    )
+    from .tools import (
+        available_tools as available_tools,
+    )
+    from .tools import (
+        register_tool as register_tool,
+    )
 
 __all__ = [
     "AuthHeaderSource",
