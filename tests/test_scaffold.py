@@ -18,9 +18,54 @@ def test_scaffold_emits_expected_files(tmp_path) -> None:  # type: ignore[no-unt
         "src/main.py",
         "src/config.py",
         "src/profiles/mautic.json",
+        "src/static/index.html",
+        "src/static/logo.svg",
         "tests/test_smoke.py",
     ):
         assert (dest / rel).is_file(), rel
+
+
+def test_scaffolded_landing_page_renders(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The generated / page is the full reference design: name baked in, runtime
+    placeholders filled by the index route, CSS braces preserved, icon served."""
+    from fastmcp import FastMCP
+    from starlette.testclient import TestClient
+
+    from bg_mcpcore.server.routes import register_index_route, register_logo_route
+
+    dest = scaffold("mautic", tmp_path)
+    static = dest / "src" / "static"
+
+    # The baked file keeps the runtime placeholders for the index route to fill.
+    raw = (static / "index.html").read_text(encoding="utf-8")
+    assert "BAUER GROUP Mautic" in raw  # display name baked at scaffold time
+    assert "$version" in raw and "$mcp_url" in raw  # runtime placeholders preserved
+
+    mcp = FastMCP(name="test")
+    register_index_route(
+        mcp,
+        static_dir=static,
+        template_vars={
+            "version": "9.9.9",
+            "protocol": "MCP / Streamable HTTP",
+            "environment": "development",
+            "auth_mode": "none",
+            "mcp_url": "http://localhost:8000/mcp",
+        },
+    )
+    register_logo_route(mcp, static_dir=static)
+    with TestClient(mcp.http_app()) as client:
+        page = client.get("/")
+        logo = client.get("/logo.svg")
+
+    assert page.status_code == 200
+    assert "BAUER GROUP Mautic" in page.text  # name in the rendered page
+    assert "9.9.9" in page.text  # version substituted at runtime
+    assert "http://localhost:8000/mcp" in page.text  # mcp_url substituted
+    assert "$version" not in page.text  # placeholder consumed
+    assert "box-sizing" in page.text  # full CSS design preserved (not a stub)
+    assert logo.status_code == 200
+    assert "svg" in logo.text and logo.headers["content-type"].startswith("image/svg")
 
 
 def test_scaffolded_profile_is_valid(tmp_path) -> None:  # type: ignore[no-untyped-def]

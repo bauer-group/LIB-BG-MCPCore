@@ -13,9 +13,23 @@ scaffold is small and the zero-dependency path keeps `bg-mcpcore new` instant.
 from __future__ import annotations
 
 import re
+from importlib import resources
 from pathlib import Path
 
 from . import __version__
+
+# Bundled brand assets (package data) reused verbatim so a generated server's
+# landing page at / and icon at /logo.svg match the BAUER GROUP reference design
+# exactly. index.html carries `__DISPLAY_NAME__` (baked at scaffold time) plus
+# the $version/$environment/$auth_mode/$mcp_url/$protocol runtime placeholders
+# that the server's index route fills via string.Template at boot.
+_DISPLAY_TOKEN = "__DISPLAY_NAME__"
+
+
+def _bundled(asset: str) -> str:
+    # Anchor on the importable package and navigate into the data subdir, so
+    # `_scaffold` needs no __init__.py and this works for wheel + editable installs.
+    return resources.files(__package__).joinpath("_scaffold", asset).read_text(encoding="utf-8")
 
 # A project slug: lowercase, starts with a letter, hyphen-separated. This becomes
 # the profile id, the `bg-<slug>-mcp` package name, and (upper-snake) the env prefix.
@@ -119,6 +133,7 @@ app = make_cli(
     load_profile(str(_SRC / "profiles" / "{v['slug']}.json")),
     settings_cls=Settings,
     version=_VERSION,
+    static_dir=str(_SRC / "static"),  # serves the landing page at / + /logo.svg
 )
 
 if __name__ == "__main__":
@@ -211,8 +226,12 @@ surface is declared in [`src/profiles/{v['slug']}.json`](src/profiles/{v['slug']
 ```bash
 pip install -e ".[test]"
 cp .env.example .env   # then edit
-python src/main.py     # serves at /mcp; liveness at /healthz
+python src/main.py     # MCP at /mcp · landing page at / · icon at /logo.svg · liveness at /healthz
 ```
+
+The landing page (`src/static/index.html`) and icon (`src/static/logo.svg`) are
+the BAUER GROUP reference design with this server's name baked in — rebrand by
+editing those two files.
 
 ## Test
 
@@ -300,6 +319,19 @@ def scaffold(name: str, target_dir: str | Path = ".", *, force: bool = False) ->
     profile_path.parent.mkdir(parents=True, exist_ok=True)
     profile_path.write_text(_profile_json(v), encoding="utf-8", newline="\n")
     written.append(f"src/profiles/{slug}.json")
+
+    # Brand assets: the full BAUER GROUP landing page (served at /) + the icon
+    # (served at /logo.svg). index.html is the reference design verbatim with the
+    # server name baked in; logo.svg is copied as-is.
+    static_dir = dest / "src" / "static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    (static_dir / "index.html").write_text(
+        _bundled("index.html").replace(_DISPLAY_TOKEN, v["display"]),
+        encoding="utf-8",
+        newline="\n",
+    )
+    (static_dir / "logo.svg").write_text(_bundled("logo.svg"), encoding="utf-8", newline="\n")
+    written += ["src/static/index.html", "src/static/logo.svg"]
 
     return dest
 
