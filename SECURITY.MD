@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE. DO NOT EDIT. Edit docs/SECURITY.template.MD instead. -->
-<!-- Generated on 2026-06-01 13:49:59 UTC -->
+<!-- Generated on 2026-06-01 14:52:04 UTC -->
 
 # Security Policy
 
@@ -101,7 +101,7 @@ server:
 ---
 
 **Current Version**: v1.1.1
-**Last Updated**: 2026-06-01 13:49:59 UTC
+**Last Updated**: 2026-06-01 14:52:04 UTC
 **Next Review**: June 2027
 **Policy Version**: 1.0.0
 
