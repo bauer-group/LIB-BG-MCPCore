@@ -2,7 +2,7 @@
 icon: material/home-variant
 ---
 
-# bg-mcpcore
+# MCP Core
 
 Config-driven, pluggable REST-API MCP servers on [FastMCP](https://github.com/jlowin/fastmcp).
 
