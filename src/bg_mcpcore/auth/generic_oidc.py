@@ -111,17 +111,26 @@ def build_generic_oidc_provider(settings: OidcSettings, inbound: Any | None = No
     from fastmcp.server.auth.oauth_proxy import OAuthProxy
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
-    # The issuer must match the token's `iss` claim exactly. It cannot be reliably
-    # derived from the authorize URL (e.g. a Keycloak authorize endpoint sits several
-    # path segments below the issuer), so require it explicitly rather than minting a
-    # verifier that silently rejects every token. The discovery path above reads the
-    # issuer from IdP metadata, so this only applies to explicit-endpoint setups.
+    # The issuer must match the token's `iss` claim exactly. When set explicitly it is
+    # used verbatim (the reliable path). When OIDC_ISSUER is unset we derive it
+    # heuristically from the authorize URL (drop the last path segment) — preserving the
+    # configurability of explicit-endpoint OIDC without OIDC_ISSUER — but the guess does
+    # not hold for every IdP (e.g. a Keycloak authorize endpoint sits several segments
+    # below the issuer), so we WARN loudly rather than fail closed or reject silently.
+    # The discovery path above reads the issuer from IdP metadata, so this only applies
+    # to explicit-endpoint setups.
     issuer = settings.oidc_issuer
     if not issuer:
-        raise ValueError(
-            "Explicit-endpoint OIDC requires OIDC_ISSUER (the token issuer / 'iss' "
-            "claim); it cannot be derived from OIDC_AUTH_URI. Set OIDC_ISSUER, or use "
-            "OIDC_DISCOVERY_URL which reads the issuer from the IdP's metadata."
+        issuer = auth_uri.rsplit("/", 1)[0]
+        logger.warning(
+            "auth.oidc_issuer_derived",
+            derived_issuer=issuer,
+            auth_uri=auth_uri,
+            hint=(
+                "OIDC_ISSUER is unset; derived it from OIDC_AUTH_URI. Set OIDC_ISSUER "
+                "explicitly (or use OIDC_DISCOVERY_URL) — the issuer must match the "
+                "token's 'iss' claim exactly or every token is rejected."
+            ),
         )
     token_verifier = JWTVerifier(jwks_uri=jwks_uri, issuer=issuer, required_scopes=scopes)
     kwargs = {

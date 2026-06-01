@@ -98,10 +98,11 @@ def test_auth_middleware_empty_for_none_mode() -> None:
 # ── generic OIDC (core) ──────────────────────────────────────────────────────
 
 
-def test_generic_oidc_explicit_endpoints_require_issuer(tmp_path) -> None:  # type: ignore[no-untyped-def]
-    # Explicit-endpoint mode cannot derive the issuer from the authorize URL, so
-    # an unset OIDC_ISSUER must fail fast rather than mint a verifier that silently
-    # rejects every token (regression for the old wrong string-chop fallback).
+def test_generic_oidc_explicit_endpoints_derive_issuer_when_unset(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # Explicit-endpoint mode without OIDC_ISSUER DERIVES the issuer from the authorize
+    # URL (drop the last path segment) and warns — preserving the configurability of
+    # OIDC servers that set only the *_uri vars (no degradation vs the pre-migration
+    # behaviour) rather than failing closed. An explicit OIDC_ISSUER is honoured verbatim.
     from bg_mcpcore.auth.generic_oidc import build_generic_oidc_provider
 
     settings = SimpleNamespace(
@@ -119,8 +120,31 @@ def test_generic_oidc_explicit_endpoints_require_issuer(tmp_path) -> None:  # ty
         oidc_jwks_uri="https://idp/realms/r/protocol/openid-connect/certs",
         oidc_issuer=None,
     )
-    with pytest.raises(ValueError, match="OIDC_ISSUER"):
-        build_generic_oidc_provider(settings)  # type: ignore[arg-type]
+    # Must NOT raise — the explicit-endpoint OIDC mode stays usable without OIDC_ISSUER.
+    provider = build_generic_oidc_provider(settings)  # type: ignore[arg-type]
+    assert provider is not None
+
+
+def test_generic_oidc_explicit_endpoints_honour_explicit_issuer(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from bg_mcpcore.auth.generic_oidc import build_generic_oidc_provider
+
+    settings = SimpleNamespace(
+        oidc_client_id="cid",
+        oidc_client_secret=SecretStr("csecret"),
+        oidc_scopes="openid",
+        public_base_url="https://mcp.example.com",
+        auth_jwt_signing_key=SecretStr("a-strong-32-byte-signing-key-value-123456"),
+        auth_redis_url=None,
+        auth_storage_encryption_key=None,
+        auth_disk_storage_path=str(tmp_path / "oauth"),
+        oidc_discovery_url=None,
+        oidc_auth_uri="https://idp/realms/r/protocol/openid-connect/auth",
+        oidc_token_uri="https://idp/realms/r/protocol/openid-connect/token",
+        oidc_jwks_uri="https://idp/realms/r/protocol/openid-connect/certs",
+        oidc_issuer="https://idp/realms/r",
+    )
+    provider = build_generic_oidc_provider(settings)  # type: ignore[arg-type]
+    assert provider is not None
 
 
 # ── descope (regression: was unbootable) ─────────────────────────────────────
