@@ -10,10 +10,11 @@ readme = "README.MD"
 license = "MIT"
 requires-python = ">=3.14"
 authors = [
-    { name = "BAUER GROUP", email = "info@bauer-group.com" },
-    { name = "Karl Bauer", email = "karl.bauer@bauer-group.com" },
+    {name = "BAUER GROUP (Karl Bauer)", email = "karl.bauer@bauer-group.com"},
 ]
+
 keywords = ["mcp", "fastmcp", "oauth", "openapi", "rest", "ai", "claude", "framework"]
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
