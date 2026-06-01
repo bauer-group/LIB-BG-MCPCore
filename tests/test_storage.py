@@ -35,16 +35,17 @@ async def test_disk_storage_encrypts_and_round_trips(tmp_path) -> None:  # type:
 
 
 @pytest.mark.asyncio
-async def test_legacy_salt_keeps_state_decryptable_across_instances(tmp_path) -> None:  # type: ignore[no-untyped-def]
-    # Two stores built from the SAME settings must derive the SAME key (default
-    # salt = LEGACY_DISK_SALT) so already-persisted state stays readable. This is
-    # the regression guard for the salt/derive_jwt_key invariant.
+async def test_derived_key_is_stable_across_restarts(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # The disk key is derived from AUTH_JWT_SIGNING_KEY + a fixed salt, so it must
+    # be identical on every boot. A second store built from the SAME settings
+    # (a restart simulation) must decrypt what the first wrote - otherwise a
+    # restart would kick every user out. Guards the derive_jwt_key invariant.
     settings = _disk_settings(tmp_path / "oauth")
-    writer = build_client_storage(settings)
-    await writer.put("client-meta", {"client_id": "dcr-123"}, collection="clients")
+    before_restart = build_client_storage(settings)
+    await before_restart.put("client-meta", {"client_id": "dcr-123"}, collection="clients")
 
-    reader = build_client_storage(settings)
-    assert await reader.get("client-meta", collection="clients") == {"client_id": "dcr-123"}
+    after_restart = build_client_storage(settings)
+    assert await after_restart.get("client-meta", collection="clients") == {"client_id": "dcr-123"}
 
 
 def test_sanitize_redis_url_strips_credentials() -> None:

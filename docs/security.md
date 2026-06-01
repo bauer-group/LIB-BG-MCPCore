@@ -32,11 +32,15 @@ object.
 ## Encrypted OAuth state at rest
 
 DCR/token state is Fernet-encrypted (Redis or disk backend). The disk key is
-derived from `AUTH_JWT_SIGNING_KEY` via HKDF with a salt that is **preserved by
-default** so deployed state stays decryptable. A per-service salt is available
-for a deliberate, signed-off crypto cutover. Redis mode **warns** when the
-storage key reuses the JWT signing key — use a dedicated
-`AUTH_STORAGE_ENCRYPTION_KEY`.
+derived from `AUTH_JWT_SIGNING_KEY` via HKDF with a fixed salt, so it is
+**identical on every restart** — the one invariant that matters, because an
+unstable key would invalidate all state and kick every user out on each restart.
+There is intentionally **no backward-compatibility** with any prior salt; the
+store holds server-side OAuth state and a one-time re-authentication on cutover
+is acceptable. Operators must mount the disk path as a volume (or use Redis),
+else the encrypted files themselves vanish on restart regardless of the key.
+Redis mode **warns** when the storage key reuses the JWT signing key — use a
+dedicated `AUTH_STORAGE_ENCRYPTION_KEY`.
 
 ## Outbound auth is fail-closed
 

@@ -7,26 +7,28 @@ JTI -> upstream-token mappings, and in-flight OAuth transactions.
 
 Without an explicit ``client_storage`` FastMCP falls back to a DiskStore under
 ``platformdirs.user_data_dir()``, which inside a container is ephemeral - every
-restart wipes everything, forcing re-registration + re-auth. This factory always
-supplies a durable, encrypted-at-rest backend.
+restart wipes everything and kicks all users out. This factory always supplies a
+durable, encrypted-at-rest backend.
 
-Two operator-selectable backends:
+Two operator-selectable backends, both encrypted at rest:
 
-* AUTH_REDIS_URL set  -> RedisStore wrapped in FernetEncryptionWrapper using the
-  operator-provided AUTH_STORAGE_ENCRYPTION_KEY. Recommended for production
-  (survives restarts + replacement, supports horizontal scaling).
+* AUTH_REDIS_URL set  -> RedisStore wrapped in FernetEncryptionWrapper with the
+  operator-provided AUTH_STORAGE_ENCRYPTION_KEY. Recommended for production:
+  survives restart + container replacement, supports horizontal scaling.
 * AUTH_REDIS_URL unset -> DiskStore at AUTH_DISK_STORAGE_PATH wrapped in
-  FernetEncryptionWrapper using a key DERIVED from AUTH_JWT_SIGNING_KEY via HKDF.
+  FernetEncryptionWrapper with a key DERIVED from AUTH_JWT_SIGNING_KEY via HKDF.
 
-Lifted from the servers (byte-identical there bar the logger name). Two additions
-for fleet safety (security guardrail #2):
+The one invariant that matters: the encryption key must be STABLE across
+container restarts, otherwise every restart invalidates all stored state and
+forces every user to re-authenticate. Stability is guaranteed because the key is
+derived from AUTH_JWT_SIGNING_KEY (a fixed env var, mandatory for any auth mode)
+plus a fixed salt - the same inputs every boot yield the same key. The operator's
+remaining duty is to MOUNT the disk path as a volume (or use Redis); otherwise
+the encrypted files themselves vanish on restart regardless of the key.
 
-* ``storage_salt`` is parameterised. It DEFAULTS to the legacy constant so all
-  already-deployed encrypted state stays decryptable. Pass a per-service salt
-  (e.g. ``f"bg-mcp-storage::{service_id}"``) ONLY as a deliberate, signed-off
-  crypto cutover with a migration for existing data.
-* In Redis mode we warn when AUTH_STORAGE_ENCRYPTION_KEY == AUTH_JWT_SIGNING_KEY,
-  because reusing the signing key for at-rest encryption widens blast radius.
+There is intentionally NO backward-compatibility with any prior salt: the
+encrypted store is server-side OAuth state, and a one-time re-authentication on
+cutover is acceptable. We do not couple to FastMCP's historical DiskStore salt.
 """
 
 from __future__ import annotations
@@ -42,17 +44,14 @@ if TYPE_CHECKING:
 
 logger = get_logger("bg-mcpcore.auth.storage")
 
-# The salt FastMCP uses for its own default DiskStore. Preserved as the default
-# so existing encrypted state remains decryptable after the lift. DO NOT change
-# the default without a crypto-cutover migration (see module docstring).
-LEGACY_DISK_SALT = "fastmcp-storage-encryption-key"
+# Fixed salt for the disk-mode HKDF derivation. Its only requirement is to be
+# constant, so the derived key is identical on every boot (restart-stable). It is
+# bg-mcpcore's own value and deliberately NOT FastMCP's historical default - we
+# do not aim to decrypt state written by a different stack.
+_STORAGE_KEY_SALT = "bg-mcpcore-oauth-storage"
 
 
-def build_client_storage(
-    settings: StorageSettings,
-    *,
-    storage_salt: str = LEGACY_DISK_SALT,
-) -> AsyncKeyValue:
+def build_client_storage(settings: StorageSettings) -> AsyncKeyValue:
     """Construct the configured encrypted OAuth state store.
 
     Always returns a concrete AsyncKeyValue - never None. Called from each
@@ -87,8 +86,9 @@ def build_client_storage(
         )
         return FernetEncryptionWrapper(key_value=redis_store, fernet=Fernet(key_bytes))
 
-    # Disk-backed fallback. Encryption key is derived from AUTH_JWT_SIGNING_KEY
-    # (mandatory for any auth mode) via HKDF + Fernet-format encoding.
+    # Disk-backed fallback. The key is derived from AUTH_JWT_SIGNING_KEY (a fixed
+    # env var) + a fixed salt, so it is identical on every restart. Mount the path
+    # as a volume or the encrypted files are wiped on restart regardless.
     from fastmcp.server.auth.jwt_issuer import derive_jwt_key
     from key_value.aio.stores.disk import DiskStore
 
@@ -97,7 +97,7 @@ def build_client_storage(
 
     derived_key = derive_jwt_key(
         high_entropy_material=settings.auth_jwt_signing_key.get_secret_value(),
-        salt=storage_salt,
+        salt=_STORAGE_KEY_SALT,
     )
 
     logger.info(
@@ -105,8 +105,8 @@ def build_client_storage(
         backend="disk",
         path=str(disk_path),
         warning_if_not_mounted=(
-            "Mount this path as a Docker volume in production; otherwise OAuth "
-            "state is wiped on every container restart."
+            "Mount this path as a Docker volume; otherwise OAuth state is wiped on "
+            "every container restart and all users must re-authenticate."
         ),
     )
     return FernetEncryptionWrapper(
@@ -127,4 +127,4 @@ def _sanitize_redis_url(url: str) -> str:
     return f"{scheme}://***@{host_part}"
 
 
-__all__ = ["LEGACY_DISK_SALT", "build_client_storage"]
+__all__ = ["build_client_storage"]

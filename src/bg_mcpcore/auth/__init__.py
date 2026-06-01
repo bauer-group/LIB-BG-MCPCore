@@ -13,10 +13,9 @@ from .resolvers import (
     NoAuthResolver,
     StaticHeaderResolver,
 )
-from .storage import LEGACY_DISK_SALT, build_client_storage
+from .storage import build_client_storage
 
 __all__ = [
-    "LEGACY_DISK_SALT",
     "AuthHeaderSource",
     "BearerEnvResolver",
     "NoAuthResolver",
