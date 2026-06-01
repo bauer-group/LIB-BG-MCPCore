@@ -53,7 +53,11 @@ on:
         type: string
         default: "errors-only"
 
-permissions: {}
+# No top-level permissions block: the called automation-templates workflow
+# requests actions/contents/issues/pull-requests: read, which must be granted by
+# the caller. Pinning `permissions: {}` here denies them and breaks the call
+# ("requesting 'read' but only allowed 'none'"). Inherit the default token scopes,
+# matching the working NocoDB_SimpleClient setup.
 
 jobs:
   notify-teams:
