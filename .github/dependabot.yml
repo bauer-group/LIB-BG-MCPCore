@@ -1,15 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Dependabot — automated dependency update PRs
+# ─────────────────────────────────────────────────────────────────────────────
+#  WHAT
+#    Opens weekly PRs for (1) the GitHub Actions pinned in .github/workflows and
+#    (2) the Python dependencies declared in pyproject.toml (core + extras +
+#    dev). Minor/patch Python bumps are grouped into a single PR to cut noise;
+#    majors come as individual PRs so a breaking bump is reviewed on its own.
+#
+#  WHY only these two ecosystems
+#    bg-mcpcore is a pure Python library with no Dockerfile/compose and no
+#    npm/etc. — so only `pip` (pyproject) and `github-actions` apply.
+#
+#  CONVENTIONS
+#    Commit prefixes follow bg-github-actions (`chore(ci)` for Actions,
+#    `chore(deps)` for Python) so semantic-release classifies them correctly.
+#    Labels mirror the pr-labeler scheme so dependency PRs triage consistently.
+# ─────────────────────────────────────────────────────────────────────────────
+
 version: 2
 updates:
+  # ── GitHub Actions pinned in the workflows ─────────────────────────────────
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(ci)"
+    labels:
+      - "type: dependencies"
+      - "area: ci/cd"
+    groups:
+      # Batch routine action bumps into one PR.
+      github-actions:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
+  # ── Python dependencies from pyproject.toml (core + extras + dev) ──────────
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"   # dev-only deps get a distinct prefix
+    labels:
+      - "type: dependencies"
+      - "area: build"
+    groups:
+      # Group low-risk minor/patch bumps; majors stay separate for review.
+      python-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
