@@ -138,8 +138,8 @@ served only when the server passes a `static_dir` to `build_app_from_profile` /
 
 ## `extensions`
 
-Layer declarative prompts + resources on top of the tool surface (loaded by the
-`[tasks]` extras subsystem). Points at a catalogue JSON:
+Layer declarative prompts + resources on top of the tool surface (the loader is
+pure core — no extra required). Points at a catalogue JSON:
 
 ```jsonc
 "extensions": { "source": "file:///app/extensions/shlink.json", "required": false }

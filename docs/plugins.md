@@ -11,6 +11,11 @@ pip-installable package, never a core edit. Three groups:
 | `bg_mcpcore.auth_resolvers` | an outbound `auth.type` | `none`, `static_header`, `bearer_env`, `python` |
 | `bg_mcpcore.tools` | a named tool for `tools.source: registry` | `bg.ping`, `bg.health` |
 
+The built-ins listed above are hardcoded in core (the one exception is the
+`openapi` tool source, itself shipped as an entry point in the `[openapi]`
+extra). The entry-point group is the seam by which a **third-party** package adds
+*more* — you do not need to declare the built-ins anywhere.
+
 ## Inbound auth providers (full FastMCP parity)
 
 `AUTH_MODE=oidc` covers any standard-OIDC IdP via discovery (Keycloak, Auth0,

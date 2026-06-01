@@ -69,7 +69,7 @@ pip install bg-mcpcore
 pip install git+{{REPO_URL}}.git@main
 
 # A specific released version/tag
-pip install git+{{REPO_URL}}.git@v{{VERSION}}
+pip install git+{{REPO_URL}}.git@{{VERSION}}
 
 # With extras (any install method)
 pip install "bg-mcpcore[openapi] @ git+{{REPO_URL}}.git@main"

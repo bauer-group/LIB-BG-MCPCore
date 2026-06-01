@@ -22,6 +22,18 @@ cannot remove the above.
 serving an unauthenticated endpoint. New modes are added by registering an
 entry-point plugin, not by accepting arbitrary strings.
 
+## Multi-tenant Entra needs a tenant allowlist
+
+`AUTH_MODE=entra-multi` validates a token's signature against Microsoft's
+multi-tenant JWKS but does **not** by itself check which tenant issued it — that
+gate is the `tid`-claim allowlist (`ENTRA_ALLOWED_TENANTS`), enforced by the
+`entra-multi` auth middleware. With the allowlist **empty**, tokens from *any*
+Entra tenant are accepted; this is a deliberate "any tenant" option (public
+multi-tenant apps), so the server boots — but it prints a **loud boot warning**
+so it is never shipped unknowingly. Set `ENTRA_ALLOWED_TENANTS` to restrict
+access to your own tenant(s). (`entra-single` is bound to one `ENTRA_TENANT_ID`
+and needs no allowlist.)
+
 ## Secrets never live in profiles
 
 Profiles reference secrets by env-var name (`value_from_env`) or interpolate
