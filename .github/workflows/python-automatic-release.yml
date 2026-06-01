@@ -63,5 +63,11 @@ jobs:
       security-engine: 'both'         # run both scanners (org standard)
       build-local-wheel: true         # build wheel + sdist before publishing
       skip-pypi: ${{ inputs.skip-pypi || false }}
+      # Regenerate README.MD / SECURITY.MD from their templates AFTER a release so
+      # the published version is reflected (matches the NocoDB blueprint). These
+      # run in-pipeline (post-bump, sequential); the standalone documentation.yml /
+      # security.yml fire only on a direct template edit.
+      update-documentation: true
+      update-security-policy: true
     # Pass org/repo secrets (PyPI token, scan credentials) to the reusable workflow.
     secrets: inherit
