@@ -140,6 +140,10 @@ def build_outbound_resolver(
         return StaticHeaderResolver(cfg.header, _read_secret(cfg, env))
     if kind == "bearer_env":
         return BearerEnvResolver(_read_secret(cfg, env))
+    if kind == "per_user_token":
+        from .auth.obo import build_per_user_resolver
+
+        return build_per_user_resolver(cfg, env)
     if kind == "python":
         if not cfg.resolver:
             raise ProfileError("Outbound auth 'python' requires 'resolver' (dotted module:attr)")
@@ -148,7 +152,7 @@ def build_outbound_resolver(
     eps = _discover("bg_mcpcore.auth_resolvers")
     if kind in eps:
         return eps[kind].load()(cfg)  # type: ignore[no-any-return]
-    known = ["none", "static_header", "bearer_env", "python", *sorted(eps)]
+    known = ["none", "static_header", "bearer_env", "per_user_token", "python", *sorted(eps)]
     raise ProfileError(f"Unknown outbound auth type '{kind}'. Known: {', '.join(known)}")
 
 

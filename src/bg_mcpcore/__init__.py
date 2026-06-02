@@ -48,6 +48,9 @@ _LAZY: dict[str, str] = {
     "BearerEnvResolver": "auth",
     "NoAuthResolver": "auth",
     "StaticHeaderResolver": "auth",
+    "MissingUpstreamToken": "auth",
+    "PerUserTokenResolver": "auth",
+    "build_per_user_resolver": "auth",
     "get_logger": "observability",
     "init_sentry": "observability",
     "now_iso": "observability",
@@ -103,10 +106,16 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
         BearerEnvResolver as BearerEnvResolver,
     )
     from .auth import (
+        MissingUpstreamToken as MissingUpstreamToken,
+    )
+    from .auth import (
         NoAuthResolver as NoAuthResolver,
     )
     from .auth import (
         OIDCDiscoveryError as OIDCDiscoveryError,
+    )
+    from .auth import (
+        PerUserTokenResolver as PerUserTokenResolver,
     )
     from .auth import (
         StaticHeaderResolver as StaticHeaderResolver,
@@ -116,6 +125,9 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
     )
     from .auth import (
         build_generic_oidc_provider as build_generic_oidc_provider,
+    )
+    from .auth import (
+        build_per_user_resolver as build_per_user_resolver,
     )
     from .auth import (
         discover_endpoints as discover_endpoints,
@@ -229,8 +241,10 @@ __all__ = [
     "BearerEnvResolver",
     "ConstructingToolProvider",
     "Environment",
+    "MissingUpstreamToken",
     "NoAuthResolver",
     "OIDCDiscoveryError",
+    "PerUserTokenResolver",
     "Profile",
     "ProfileError",
     "StaticHeaderResolver",
@@ -246,6 +260,7 @@ __all__ = [
     "build_gateway",
     "build_generic_oidc_provider",
     "build_outbound_resolver",
+    "build_per_user_resolver",
     "build_rate_limit_middleware",
     "build_tool_provider",
     "discover_endpoints",
