@@ -144,6 +144,15 @@ async def build_app_from_profile(
     for middleware in (*build_auth_middleware(settings), *extra_middleware):
         mcp.add_middleware(middleware)
 
+    # Declarative role/claim access gate (profile `access_control` block), built
+    # from the settings allowlist. Runs after auth so it sees verified claims.
+    if profile.access_control is not None:
+        from .providers.access_control import build_access_control_middleware
+
+        gate = build_access_control_middleware(profile.access_control, settings)
+        if gate is not None:
+            mcp.add_middleware(gate)
+
     total = 0
     for tc, provider in registering:
         provider_ctx = ctx_full if tc.source == "python" else ctx_scoped

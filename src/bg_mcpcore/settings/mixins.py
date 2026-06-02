@@ -8,11 +8,13 @@ from the two servers (identical there).
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, HttpUrl, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, SecretStr, field_validator
+from pydantic_settings import NoDecode
 
 from .enums import Environment
+from .helpers import split_csv
 
 
 class GeneralSettingsMixin(BaseModel):
@@ -100,7 +102,27 @@ class ObservabilityMixin(BaseModel):
     sentry_traces_sample_rate: float = Field(default=0.05, ge=0.0, le=1.0)
 
 
+class AccessControlMixin(BaseModel):
+    # The role allowlist + audit toggle that the profile's `access_control` block
+    # activates. Env-tunable per deployment; empty allowlist = any authenticated
+    # user (the gate is then a no-op). Roles are matched case-insensitively.
+    mcp_allowed_roles: Annotated[list[str], NoDecode] = Field(
+        default_factory=list,
+        description="Role names allowed to use this MCP (CSV; case-insensitive). Empty = any.",
+    )
+    mcp_role_check_audit_only: bool = Field(
+        default=False,
+        description="If true, a disallowed role is logged but the request passes (rollout mode).",
+    )
+
+    @field_validator("mcp_allowed_roles", mode="before")
+    @classmethod
+    def _parse_roles_csv(cls, value: object) -> list[str]:
+        return split_csv(value)  # type: ignore[arg-type]
+
+
 __all__ = [
+    "AccessControlMixin",
     "AuthPersistenceMixin",
     "GeneralSettingsMixin",
     "McpIdentityMixin",

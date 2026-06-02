@@ -18,6 +18,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from .enums import Environment
 from .helpers import validate_persistence
 from .mixins import (
+    AccessControlMixin,
     AuthPersistenceMixin,
     GeneralSettingsMixin,
     McpIdentityMixin,
@@ -35,6 +36,7 @@ class BaseMcpSettings(
     AuthPersistenceMixin,
     OidcSettingsMixin,
     RateLimiterMixin,
+    AccessControlMixin,
     ObservabilityMixin,
     BaseSettings,
 ):

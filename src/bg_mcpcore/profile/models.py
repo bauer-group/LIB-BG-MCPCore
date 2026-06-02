@@ -79,6 +79,23 @@ class ExtensionsRef(BaseModel):
     required: bool = False
 
 
+class AccessControlConfig(BaseModel):
+    """Declares a coarse role/claim access gate on every authenticated request.
+
+    Presence of this block activates the gate; the allowlist + audit toggle come
+    from settings (``MCP_ALLOWED_ROLES`` / ``MCP_ROLE_CHECK_AUDIT_ONLY``, env-
+    tunable per deployment). ``roles_claim`` names the token claim carrying the
+    user's roles (list of strings, or of ``{"name": ...}`` objects). When the
+    claim is absent (e.g. an IdP that carries no roles), the gate passes —
+    enforcement is deferred to the upstream — so it is a no-op in modes that
+    don't supply roles.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    roles_claim: str = "roles"
+
+
 class Profile(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -92,6 +109,7 @@ class Profile(BaseModel):
     tools: ToolsConfig | list[ToolsConfig]
     routes: RoutesConfig = Field(default_factory=RoutesConfig)
     extensions: ExtensionsRef | None = None
+    access_control: AccessControlConfig | None = None
 
     @property
     def tool_sources(self) -> list[ToolsConfig]:
@@ -99,6 +117,7 @@ class Profile(BaseModel):
 
 
 __all__ = [
+    "AccessControlConfig",
     "AuthConfig",
     "BackendConfig",
     "ExtensionsRef",
