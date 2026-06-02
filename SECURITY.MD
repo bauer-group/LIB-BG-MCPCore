@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE. DO NOT EDIT. Edit docs/SECURITY.template.MD instead. -->
-<!-- Generated on 2026-06-01 23:45:05 UTC -->
+<!-- Generated on 2026-06-02 00:20:41 UTC -->
 
 # Security Policy
 
@@ -41,11 +41,11 @@ Report via **GitHub Security Advisories** — a secure, private channel:
 
 | Version | Support Status | Security Updates |
 |---------|---------------|------------------|
-| v1.5.0 (current) | ✅ Full Support | ✅ Yes |
+| v1.6.0 (current) | ✅ Full Support | ✅ Yes |
+| v1.5.0 | ❌ End of Life | ❌ No |
 | v1.4.0 | ❌ End of Life | ❌ No |
 | v1.3.0 | ❌ End of Life | ❌ No |
 | v1.2.1 | ❌ End of Life | ❌ No |
-| v1.2.0 | ❌ End of Life | ❌ No |
 
 We provide security updates for supported versions only.
 
@@ -100,8 +100,8 @@ server:
 
 ---
 
-**Current Version**: v1.5.0
-**Last Updated**: 2026-06-01 23:45:05 UTC
+**Current Version**: v1.6.0
+**Last Updated**: 2026-06-02 00:20:41 UTC
 **Next Review**: June 2027
 **Policy Version**: 1.0.0
 
