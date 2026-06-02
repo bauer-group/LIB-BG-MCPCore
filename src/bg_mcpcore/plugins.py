@@ -202,10 +202,14 @@ def build_tool_provider(cfg: ToolsConfig) -> Any:
         return _PythonToolProvider(cfg.register_target)
     if source == "registry":
         return _RegistryToolProvider(cfg.include)
+    if source == "export":
+        from .tools.export import create_export_tool_provider
+
+        return create_export_tool_provider(cfg)
     eps = _discover("bg_mcpcore.tool_sources")
     if source in eps:
         return eps[source].load()(cfg)
-    known = ["python", "registry", *sorted(eps)]
+    known = ["python", "registry", "export", *sorted(eps)]
     raise ProfileError(f"Unknown tools.source '{source}'. Known: {', '.join(known)}")
 
 
