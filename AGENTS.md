@@ -91,16 +91,30 @@ Rules:
 | `none` | upstream needs no auth |
 | `static_header` | a fixed header, e.g. `X-Api-Key` (`header` + `value_from_env`) |
 | `bearer_env` | `Authorization: Bearer <token>` from an env var |
+| `per_user_token` | **on-behalf-of**: forwards the caller's upstream token per request, fail-closed. Resolves from the access-token `claims` then OAuth-state storage (jti/sub); optional `static_fallback_env` + `static_fallback_template`. Needs a python/request tool surface (not OpenAPI). |
 | `python` | escape hatch: `resolver: "module:factory"` returning an `AuthHeaderSource` |
 
 A per-call resolver MUST raise when it cannot produce a credential — never fall
 back to a static default silently (fail-closed; see [docs/security.md](docs/security.md)).
 
+## Declarative building blocks (prefer over Python)
+
+- **Role/claim access gate** → add `"access_control": { "roles_claim": "roles" }`
+  and set `MCP_ALLOWED_ROLES` (+ `MCP_ROLE_CHECK_AUDIT_ONLY`). Denies a request
+  whose verified-token roles aren't on the list; an absent roles claim passes
+  (no-op in modes without roles); empty allowlist disables it.
+- **Bulk export** → `tools: { "source": "export", "name": "...", "endpoint": "...",
+  "items_path": "data.items", "page_param": "page", "page_size_param": "per_page",
+  "current_page_path": "...", "total_pages_path": "...", "formats": ["csv","json"],
+  "task": { "mode": "required" } }` — paginates + renders as a task ([tasks] extra).
+
 ## Escape hatches (when config is not enough)
 
 - **Bespoke tools** → `tools: { "source": "python", "register": "server:register" }`;
   the dotted callable is `def register(mcp, ctx) -> int` (it gets a settings-bearing
-  `ToolContext`; OpenAPI/registry sources get a settings-less one — least privilege).
+  `ToolContext`; OpenAPI/registry/export sources get a settings-less one — least
+  privilege). Inside a tool, `await ctx.request_json(method, path)` decodes on 2xx
+  and raises `UpstreamError` (or your `error_factory`) on non-2xx — no decode shim.
 - **Custom outbound credential** → `auth.outbound.type: "python"`.
 - **Reusable central tools** → `tools: { "source": "registry", "include": ["bg.ping", …] }`.
 

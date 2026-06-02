@@ -92,8 +92,19 @@ no `config`. See [plugins](plugins.md) for the full provider catalogue.
 | `none` | — | no outbound auth |
 | `static_header` | `header` + `value_from_env` | a fixed header (Shlink's `X-Api-Key`) |
 | `bearer_env` | `value_from_env` | `Authorization: Bearer <token>` |
-| `python` | `resolver` (dotted `module:attr`) | a custom `AuthHeaderSource` (per-user OBO, signed headers) |
+| `per_user_token` | — (optional `static_fallback_env`) | **on-behalf-of**: the caller's upstream token, per request, fail-closed |
+| `python` | `resolver` (dotted `module:attr`) | a custom `AuthHeaderSource` (bespoke signed headers) |
 | *(plugin)* | per resolver | any `bg_mcpcore.auth_resolvers` entry point |
+
+`per_user_token` resolves the upstream token from the access-token `claims`
+(default `upstream_access_token` / `upstream_token`) then the OAuth-state storage
+keyed by `jti`/`sub`, and applies it as `{scheme} <token>` on `header` (default
+`Authorization` / `Bearer`). When none is found it raises — unless
+`static_fallback_env` is set, then it applies that via `static_fallback_template`
+(e.g. `"Token token={token}"`) or `{scheme} <token>`. Per-call only, so it needs a
+python/request tool surface (the OpenAPI source uses the bare client). Optional
+keys: `scheme`, `claims`, `storage_key_prefixes`, `static_fallback_env`,
+`static_fallback_template`.
 
 `value_from_env` names the env var holding the secret (resolved fail-closed at
 boot); use `value` only for non-secret literals. A resolver splits credentials
@@ -114,6 +125,14 @@ source — OpenAPI — builds the instance, the rest register onto it). Built-in
 
 // reusable tools from the central registry
 { "source": "registry", "include": ["bg.ping", "bg.health"] }
+
+// paginated bulk export rendered as a CSV/JSON task ([tasks] extra)
+{ "source": "export", "name": "export_short_urls", "endpoint": "/short-urls",
+  "items_path": "shortUrls.data", "page_param": "page",
+  "page_size_param": "itemsPerPage", "page_size": 200,
+  "current_page_path": "shortUrls.pagination.currentPage",
+  "total_pages_path": "shortUrls.pagination.pagesCount",
+  "formats": ["csv", "json"], "task": { "mode": "required", "poll_interval_seconds": 2.0 } }
 
 // OpenAPI-derived ([openapi] extra) — generalises Shlink's tool_mapper
 { "source": "openapi",
@@ -161,6 +180,21 @@ pure core — no extra required). Points at a catalogue JSON:
 ```
 
 `required: true` makes a load failure fatal; `false` logs and continues.
+
+## :material-account-key:  `access_control`
+
+A coarse role/claim gate on every authenticated request (added after auth):
+
+```jsonc
+"access_control": { "roles_claim": "roles" }
+```
+
+Presence activates the gate; the allowlist + audit toggle are env-tunable via
+`MCP_ALLOWED_ROLES` (CSV) and `MCP_ROLE_CHECK_AUDIT_ONLY`. Roles come from the
+verified token's `roles_claim` (a list of strings or `{"name": ...}` objects,
+case-insensitive). A present-but-non-matching role is denied (or audit-logged +
+passed); an **absent** claim passes (a mode that carries no roles defers to the
+upstream); an empty allowlist disables the gate. See [security model](security.md).
 
 ## :material-file-document-check:  A complete annotated profile
 
