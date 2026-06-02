@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE. DO NOT EDIT. Edit docs/README.template.MD instead. -->
-<!-- Generated on 2026-06-01 23:44:51 UTC -->
+<!-- Generated on 2026-06-02 00:20:28 UTC -->
 
 # BAUER GROUP - BG-MCPCore
 
@@ -18,7 +18,7 @@ declarative profile.
 
 **Repository Information:**
 
-- **Version:** v1.5.0 (2026-06-01)
+- **Version:** v1.6.0 (2026-06-02)
 - **Repository:** [bauer-group/LIB-BG-MCPCore](https://github.com/bauer-group/LIB-BG-MCPCore)
 - **Branch:** main
 - **Architecture:** Config-driven, pluggable, secure-by-default
@@ -72,7 +72,7 @@ pip install bg-mcpcore
 pip install git+https://github.com/bauer-group/LIB-BG-MCPCore.git@main
 
 # A specific released version/tag
-pip install git+https://github.com/bauer-group/LIB-BG-MCPCore.git@v1.5.0
+pip install git+https://github.com/bauer-group/LIB-BG-MCPCore.git@v1.6.0
 
 # With extras (any install method)
 pip install "bg-mcpcore[openapi] @ git+https://github.com/bauer-group/LIB-BG-MCPCore.git@main"
