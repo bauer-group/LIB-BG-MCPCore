@@ -61,7 +61,7 @@ jobs:
         python-version: ["3.12", "3.13", "3.14"]
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -109,7 +109,7 @@ jobs:
         extra: ["openapi", "redis", "oauth-providers", "tasks", "testkit"]
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Run on the floor (3.12): the version most likely to surface an extra
       # dependency that does not support the minimum we ship.
