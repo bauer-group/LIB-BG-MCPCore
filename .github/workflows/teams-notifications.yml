@@ -59,6 +59,12 @@ on:
 # ("requesting 'read' but only allowed 'none'"). Inherit the default token scopes,
 # matching the working NocoDB_SimpleClient setup.
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+
 jobs:
   notify-teams:
     name: Send Teams Notification
