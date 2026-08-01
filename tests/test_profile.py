@@ -192,3 +192,35 @@ def test_unknown_tool_source_raises() -> None:
 
     with pytest.raises(ProfileError, match=r"Unknown tools\.source"):
         build_tool_provider(ToolsConfig(source="made-up"))
+
+
+# ── shipped JSON Schemas must track the models ───────────────────────────────
+
+
+def test_shipped_schemas_match_the_models() -> None:
+    """``scripts/generate_schemas.py`` output must equal what is committed.
+
+    The profile schema is published by ``$id`` and referenced from every
+    consumer's profile via ``$schema``, and it carries
+    ``additionalProperties: false``. When it drifts behind the models, an
+    editor rejects a profile the loader accepts — which is exactly what
+    happened: ``access_control`` existed on ``Profile`` for two releases while
+    the schema still forbade it.
+    """
+    import json
+    from pathlib import Path
+
+    from bg_mcpcore.extensions.config import ExtensionsConfig
+    from bg_mcpcore.profile.models import Profile
+
+    src = Path(__file__).resolve().parent.parent / "src" / "bg_mcpcore"
+    for model, rel in ((Profile, "profile/schema.json"), (ExtensionsConfig, "extensions/schema.json")):
+        committed = json.loads((src / rel).read_text(encoding="utf-8"))
+        expected = model.model_json_schema()
+        # The two identity keys are added by the generator, not by pydantic.
+        assert committed["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+        assert committed["$id"].endswith(rel)
+        actual = {k: v for k, v in committed.items() if k not in ("$schema", "$id")}
+        assert actual == expected, (
+            f"{rel} is out of date with its model — run scripts/generate_schemas.py"
+        )

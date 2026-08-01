@@ -2,6 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/bauer-group/LIB-BG-MCPCore/main/src/bg_mcpcore/profile/schema.json",
   "$defs": {
+    "AccessControlConfig": {
+      "additionalProperties": false,
+      "description": "Declares a coarse role/claim access gate on every authenticated request.\n\nPresence of this block activates the gate; the allowlist + audit toggle come\nfrom settings (``MCP_ALLOWED_ROLES`` / ``MCP_ROLE_CHECK_AUDIT_ONLY``, env-\ntunable per deployment). ``roles_claim`` names the token claim carrying the\nuser's roles (list of strings, or of ``{\"name\": ...}`` objects). When the\nclaim is absent (e.g. an IdP that carries no roles), the gate passes \u2014\nenforcement is deferred to the upstream \u2014 so it is a no-op in modes that\ndon't supply roles.",
+      "properties": {
+        "roles_claim": {
+          "default": "roles",
+          "title": "Roles Claim",
+          "type": "string"
+        }
+      },
+      "title": "AccessControlConfig",
+      "type": "object"
+    },
     "AuthConfig": {
       "additionalProperties": false,
       "properties": {
@@ -277,6 +290,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/ExtensionsRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "access_control": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AccessControlConfig"
         },
         {
           "type": "null"
