@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 
 from ..observability import get_logger
+from .gating import should_gate
 
 if TYPE_CHECKING:
     from ..profile.models import AccessControlConfig
@@ -90,6 +91,10 @@ class RoleAllowlistMiddleware(Middleware):
 
         user_roles = _extract_role_names(raw)
         if user_roles & self._allowed:
+            return await call_next(context)
+        # FastMCP 4 routes discovery (server/discover, initialize) through
+        # on_request too; let the connection establish and deny the rest.
+        if not should_gate(context.method):
             return await call_next(context)
         return await self._handle_disallowed(user_roles, token.claims, context, call_next)
 
