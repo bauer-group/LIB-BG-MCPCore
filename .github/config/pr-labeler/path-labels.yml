@@ -1,92 +1,209 @@
 # PR Labeler Configuration for bg-mcpcore
-# Automatically assigns labels based on file changes.
+#
+# This file is handed VERBATIM to actions/labeler as its `configuration-path`
+# (.github/workflows/pr-labeler.yml -> automation-templates/pr-labeler.yml ->
+# modules-pr-labeler.yml -> actions/labeler-triage -> actions/labeler@v6).
+# Nothing in that chain pre-processes it, so it must be a pure actions/labeler
+# v5+ config and nothing else.
+#
+# SCHEMA -- read this before editing:
+#   * Every top-level key is a LABEL NAME. The only exceptions labeler reserves
+#     are `changed-files-labels-limit` and `max-files-changed`. A top-level key
+#     that is not a label name is parsed AS one and fails the run:
+#       Error: found unexpected type for label 'X' (should be array of config options)
+#   * A label's value must be an ARRAY OF OBJECTS. The pre-v5 shorthand
+#     `label: [glob, glob]` (an array of strings) raises that same error.
+#   * Entries within one label are OR-ed. Inside an entry use `all:` to require
+#     every condition.
+#   * Match keys: changed-files | head-branch | base-branch | any | all.
+#     Under changed-files: any-glob-to-any-file | any-glob-to-all-files |
+#     all-globs-to-any-file | all-globs-to-all-files.
+#   * Globs are minimatch and CASE-SENSITIVE. A bare directory prefix matches
+#     NOTHING -- write `docs/**`, not `docs/`. This repo has SECURITY.MD and
+#     README.MD in caps.
+#   * head-branch / base-branch values are JavaScript regexes, not globs.
+#
+# PREREQUISITE: every label below must already exist in the repository. The
+# reusable workflow caps the token at `contents: read` + `pull-requests: write`,
+# so labeler cannot create a missing label -- it fails the job with a 403
+# instead. Adding a label here therefore means running `gh label create` too.
+#
+# `sync-labels: true` is set by the caller, so a label listed here is fully
+# managed: it is REMOVED from a PR that stops matching. That is why
+# `type: dependencies` is deliberately absent -- Dependabot applies it from
+# .github/dependabot.yml, and listing it here would strip it from any
+# dependency PR that does not happen to touch pyproject.toml.
 
-size-labels:
-  xs: 0-10
-  small: 11-50
-  medium: 51-200
-  large: 201-500
-  xl: 501-1000
-  xxl: 1001+
+# ── Area: which part of the library a PR touches ─────────────────────────────
 
-path-labels:
-  "src/bg_mcpcore/":
-    - "area: core"
+"area: core":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/**"
 
-  "src/bg_mcpcore/auth/":
-    - "area: auth"
-    - "priority: high"
+"area: auth":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/auth/**"
+          - "src/bg_mcpcore/providers/**"
 
-  "src/bg_mcpcore/settings/":
-    - "area: settings"
-    - "priority: high"
+"area: settings":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/settings/**"
 
-  "src/bg_mcpcore/profile/":
-    - "area: profile-engine"
+"area: profile-engine":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/profile/**"
 
-  "src/bg_mcpcore/openapi/":
-    - "area: openapi"
+"area: openapi":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/openapi/**"
 
-  "src/bg_mcpcore/plugins.py":
-    - "area: plugins"
+"area: plugins":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/plugins.py"
+          - "src/bg_mcpcore/extensions/**"
 
-  "tests/":
-    - "area: tests"
-    - "type: testing"
+"area: tests":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "tests/**"
 
-  "docs/":
-    - "area: documentation"
-    - "type: documentation"
+"area: documentation":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "mkdocs.yml"
+          - "*.md"
+          - "*.MD"
 
-  "examples/":
-    - "area: examples"
-    - "type: documentation"
+"area: examples":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "examples/**"
 
-  "pyproject.toml":
-    - "area: build"
-    - "type: build"
+"area: build":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "pyproject.toml"
+          - "Makefile"
+          - "Make.cmd"
+          - "scripts/**"
 
-  ".github/workflows/":
-    - "area: ci/cd"
-    - "type: ci"
+"area: ci/cd":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+          - ".github/config/**"
+          - ".pre-commit-config.yaml"
 
-  "SECURITY.MD":
-    - "area: security"
-    - "type: security"
-    - "priority: high"
+"area: security":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "SECURITY.MD"
+          - ".gitleaks.toml"
 
-branch-labels:
-  feature/*: ["type: feature"]
-  fix/*: ["type: bugfix"]
-  hotfix/*: ["type: hotfix", "priority: critical"]
-  chore/*: ["type: chore"]
-  docs/*: ["type: documentation"]
-  test/*: ["type: testing"]
-  ci/*: ["type: ci"]
-  security/*: ["type: security", "priority: high"]
-  refactor/*: ["type: refactor"]
+# ── Type: what kind of change, from the branch name or the paths touched ─────
 
-title-labels:
-  - pattern: "(?i)(breaking|major)"
-    labels: ["type: breaking-change", "priority: critical"]
-  - pattern: "(?i)(fix|bug)"
-    labels: ["type: bugfix"]
-  - pattern: "(?i)(feat|feature)"
-    labels: ["type: feature"]
-  - pattern: "(?i)(doc|documentation)"
-    labels: ["type: documentation"]
-  - pattern: "(?i)(security|vulnerability|cve)"
-    labels: ["type: security", "priority: high"]
-  - pattern: "(?i)(refactor|cleanup)"
-    labels: ["type: refactor"]
+"type: feature":
+  - head-branch:
+      - "^feat(ure)?/"
 
-auto-reviewers:
-  "area: auth":
-    reviewers: ["karl.bauer@bauer-group.com"]
-    review-required: true
-  "area: settings":
-    reviewers: ["karl.bauer@bauer-group.com"]
-    review-required: true
-  "type: breaking-change":
-    reviewers: ["karl.bauer@bauer-group.com"]
-    review-required: true
+"type: bugfix":
+  - head-branch:
+      - "^fix/"
+      - "^bugfix/"
+
+"type: hotfix":
+  - head-branch:
+      - "^hotfix/"
+
+"type: chore":
+  - head-branch:
+      - "^chore/"
+
+"type: refactor":
+  - head-branch:
+      - "^refactor/"
+
+"type: documentation":
+  - head-branch:
+      - "^docs?/"
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "examples/**"
+
+"type: testing":
+  - head-branch:
+      - "^test/"
+  - changed-files:
+      - any-glob-to-any-file:
+          - "tests/**"
+
+"type: ci":
+  - head-branch:
+      - "^ci/"
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+
+"type: security":
+  - head-branch:
+      - "^security/"
+  - changed-files:
+      - any-glob-to-any-file:
+          - "SECURITY.MD"
+
+"type: build":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "pyproject.toml"
+
+# ── Priority: the security-sensitive surfaces get extra eyes ─────────────────
+
+"priority: high":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/bg_mcpcore/auth/**"
+          - "src/bg_mcpcore/providers/**"
+          - "src/bg_mcpcore/settings/**"
+          - "SECURITY.MD"
+  - head-branch:
+      - "^security/"
+
+"priority: critical":
+  - head-branch:
+      - "^hotfix/"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Removed -- these blocks had no consumer anywhere in the workflow chain and
+# were only ever visible to actions/labeler, which read each of them as a
+# label name and failed the run:
+#
+#   size-labels:     the `size-labels: true` workflow input drives a bash step
+#                    in the composite action with its OWN hardcoded thresholds
+#                    and names (size/XS < 10 ... size/XXL). The block here
+#                    declared different names and different thresholds and was
+#                    never read by anything.
+#   path-labels:     a wrapper key labeler has no concept of. Its contents are
+#                    inverted above: labeler is keyed by label, not by path.
+#   branch-labels:   became the `head-branch` entries above. Note these are
+#                    regexes now, not globs -- `feature/*` became `^feat(ure)?/`.
+#   title-labels:    actions/labeler cannot match PR titles at all. Title-based
+#                    labelling is a hardcoded keyword grep in the composite
+#                    action. This is why `type: breaking-change` has no rule
+#                    here -- it had only a title trigger.
+#   auto-reviewers:  the `auto-assign` step reads CODEOWNERS and already
+#                    requested reviewers; it never read this block. Reviewer
+#                    assignment lives in .github/CODEOWNERS.
+#
+# `custom-rules` (.github/config/pr-labeler/triage-rules.yml) is passed to the
+# composite action but its handler is still a stub upstream ("Custom rules
+# would be processed here"), so that file is inert today. It is left in place
+# unchanged for when the template implements it.
+# ─────────────────────────────────────────────────────────────────────────────
