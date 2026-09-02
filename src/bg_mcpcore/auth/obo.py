@@ -12,7 +12,7 @@ claim/storage lookup simply finds nothing and the static fallback takes over.
 
 PER-CALL ONLY (security guardrail #3): ``default_headers`` is empty. The resolver
 drives ``ctx.request`` / ``request_json``; an OpenAPI tool source uses the bare
-httpx client (default headers), which cannot carry a per-user credential — OBO
+httpx2 client (default headers), which cannot carry a per-user credential — OBO
 needs a python / request-based tool surface.
 """
 

@@ -129,7 +129,7 @@ async def build_app_from_profile(
         if auth_provider is not None:
             kwargs["auth"] = auth_provider
         if icon_url:
-            kwargs["icons"] = [Icon(src=icon_url, mimeType="image/svg+xml")]
+            kwargs["icons"] = [Icon(src=icon_url, mime_type="image/svg+xml")]
         if website_url:
             kwargs["website_url"] = website_url
         mcp = FastMCP(**kwargs)

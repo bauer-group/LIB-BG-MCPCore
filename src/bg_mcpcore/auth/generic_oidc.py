@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
+import httpx2
 
 from .._config_protocols import OidcSettings
 from ..observability import get_logger
@@ -34,11 +34,11 @@ class OIDCDiscoveryError(RuntimeError):
 def discover_endpoints(discovery_url: str, *, timeout: float = 10.0) -> dict[str, Any]:
     """Fetch the OIDC discovery document and validate the required fields."""
     try:
-        with httpx.Client(timeout=timeout, follow_redirects=True) as client:
+        with httpx2.Client(timeout=timeout, follow_redirects=True) as client:
             response = client.get(discovery_url, headers={"Accept": "application/json"})
             response.raise_for_status()
             doc: dict[str, Any] = response.json()
-    except httpx.HTTPError as exc:
+    except httpx2.HTTPError as exc:
         raise OIDCDiscoveryError(f"Failed to fetch {discovery_url}: {exc}") from exc
     except ValueError as exc:
         raise OIDCDiscoveryError(f"Discovery doc at {discovery_url} is not valid JSON") from exc

@@ -9,7 +9,7 @@ Design pillars:
     * Modular  — new auth modes / tool sources / resolvers are pip-installable
       plugins registered via Python entry points, never core edits.
     * Configurable — every standard behaviour is an overridable profile default.
-    * Stable — the mandatory core depends only on fastmcp/pydantic/httpx/
+    * Stable — the mandatory core depends only on fastmcp/pydantic/httpx2/
       structlog/cryptography; volatile concerns live in optional extras.
     * Secure — fail-closed auth invariants are enforced in core and cannot be
       switched off by a profile.
@@ -37,6 +37,15 @@ _LAZY: dict[str, str] = {
     "build_gateway": "gateway",
     "make_cli": "cli",
     "UpstreamClient": "http",
+    "ConnectError": "http",
+    "ConnectTimeout": "http",
+    "HTTPError": "http",
+    "HTTPStatusError": "http",
+    "Request": "http",
+    "RequestError": "http",
+    "Response": "http",
+    "TimeoutException": "http",
+    "TransportError": "http",
     "Profile": "profile",
     "ProfileError": "profile",
     "load_profile": "profile",
@@ -134,6 +143,15 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
     )
     from .cli import make_cli as make_cli
     from .gateway import build_gateway as build_gateway
+    from .http import ConnectError as ConnectError
+    from .http import ConnectTimeout as ConnectTimeout
+    from .http import HTTPError as HTTPError
+    from .http import HTTPStatusError as HTTPStatusError
+    from .http import Request as Request
+    from .http import RequestError as RequestError
+    from .http import Response as Response
+    from .http import TimeoutException as TimeoutException
+    from .http import TransportError as TransportError
     from .http import UpstreamClient as UpstreamClient
     from .observability import (
         get_logger as get_logger,
@@ -239,17 +257,26 @@ __all__ = [
     "AuthHeaderSource",
     "BaseMcpSettings",
     "BearerEnvResolver",
+    "ConnectError",
+    "ConnectTimeout",
     "ConstructingToolProvider",
     "Environment",
+    "HTTPError",
+    "HTTPStatusError",
     "MissingUpstreamToken",
     "NoAuthResolver",
     "OIDCDiscoveryError",
     "PerUserTokenResolver",
     "Profile",
     "ProfileError",
+    "Request",
+    "RequestError",
+    "Response",
     "StaticHeaderResolver",
+    "TimeoutException",
     "ToolContext",
     "ToolProvider",
+    "TransportError",
     "UpstreamClient",
     "UpstreamError",
     "__version__",

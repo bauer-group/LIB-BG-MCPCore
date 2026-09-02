@@ -5,7 +5,7 @@ structlog is the single source of truth. Two output modes:
   - 'json'    (prod): one JSON object per line, aggregator-ready
 
 Stdlib ``logging`` is also routed through structlog so third-party libraries
-(httpx, fastmcp, uvicorn) emit in the same shape as our own log lines.
+(httpx2, fastmcp, uvicorn) emit in the same shape as our own log lines.
 
 Lifted verbatim from the bg-zammad-mcp / bg-shlink-mcp servers (byte-identical
 there) with one addition: ``setup_logging`` accepts ``extra_sensitive_fragments``
@@ -84,9 +84,11 @@ def setup_logging(
     root.addHandler(handler)
     root.setLevel(level)
 
-    # Quiet down very chatty libraries even at INFO.
-    logging.getLogger("httpx").setLevel(max(level, logging.WARNING))
-    logging.getLogger("httpcore").setLevel(max(level, logging.WARNING))
+    # Quiet down very chatty libraries even at INFO. FastMCP 4 and our own
+    # UpstreamClient log under httpx2/httpcore2; the httpx/httpcore names are
+    # kept for downstream tools still issuing their own httpx calls.
+    for chatty in ("httpx2", "httpcore2", "httpx", "httpcore"):
+        logging.getLogger(chatty).setLevel(max(level, logging.WARNING))
     logging.getLogger("hpack").setLevel(logging.WARNING)
 
     structlog.configure(
