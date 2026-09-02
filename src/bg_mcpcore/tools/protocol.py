@@ -125,6 +125,8 @@ class ConstructingToolProvider(Protocol):
         icon_url: str | None,
         website_url: str | None,
         ctx: ToolContext,
+        cache: Any | None = None,
+        session_state_store: Any | None = None,
     ) -> FastMCP: ...
 
 

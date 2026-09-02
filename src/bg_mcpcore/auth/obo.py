@@ -19,7 +19,7 @@ needs a python / request-based tool surface.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, cast
 
 from ..observability import get_logger
 from ..profile.loader import ProfileError
@@ -134,6 +134,85 @@ def build_per_user_resolver(cfg: Any, env: Mapping[str, str]) -> PerUserTokenRes
         key_prefixes=key_prefixes,
         static_fallback=static_token,
         static_fallback_template=extra.get("static_fallback_template"),
+    )
+
+
+
+class EntraOboResolver:
+    """Outbound auth via Microsoft Entra's native On-Behalf-Of exchange.
+
+    Where :class:`PerUserTokenResolver` *finds* a token the IdP already issued,
+    this one *mints* a new one: it delegates to FastMCP's ``EntraOBOToken``
+    dependency, which drives azure-identity's ``OnBehalfOfCredential`` to
+    exchange the caller's Entra token for a downstream-API token, with the Azure
+    SDK's own cache and refresh behind it.
+
+    Prefer it over ``per_user_token`` on the ``entra-single`` / ``entra-multi``
+    auth modes. It is a supported API, so it does not depend on the shape of
+    FastMCP's OAuth-state storage, and it can request scopes the original token
+    never carried.
+
+    Requirements: ``AUTH_MODE`` must be an Entra mode (the server's auth provider
+    must be an ``AzureProvider``), the ``[oauth-providers]`` extra must be
+    installed, and every requested scope must appear in the provider's
+    ``additional_authorize_scopes`` with admin consent granted.
+
+    PER-CALL ONLY (guardrail #3): ``default_headers`` is empty, and a failed
+    exchange raises rather than falling back to an unauthenticated call.
+    """
+
+    def __init__(
+        self,
+        *,
+        scopes: Sequence[str],
+        header: str = "Authorization",
+        scheme: str = "Bearer",
+    ) -> None:
+        self._scopes = list(scopes)
+        if not self._scopes:
+            raise ProfileError("Outbound auth 'entra_obo' requires a non-empty 'scopes' list")
+        self._header = header
+        self._scheme = scheme
+
+    def default_headers(self) -> dict[str, str]:
+        return {}
+
+    async def auth_headers(self, _ctx: Any) -> dict[str, str]:
+        try:
+            from fastmcp.server.auth.providers.azure import EntraOBOToken
+        except ImportError as exc:  # pragma: no cover - needs the extra absent
+            raise ProfileError(
+                "Outbound auth 'entra_obo' requires the 'oauth-providers' extra "
+                "(bg-mcpcore[oauth-providers], which pulls fastmcp[azure])"
+            ) from exc
+
+        # EntraOBOToken is typed as the str it resolves to, but is a Dependency
+        # at runtime; cast so the async-with is honest to the type checker.
+        dependency = cast(Any, EntraOBOToken(self._scopes))
+        try:
+            async with dependency as token:
+                if not token:
+                    raise MissingUpstreamToken("Entra OBO exchange returned an empty token")
+                return {self._header: f"{self._scheme} {token}".strip()}
+        except MissingUpstreamToken:
+            raise
+        except RuntimeError as exc:
+            # No caller token, a non-Azure provider, or a rejected exchange.
+            # Fail closed — never let the request proceed unauthenticated.
+            logger.warning("auth.entra_obo_exchange_failed", error=str(exc))
+            raise MissingUpstreamToken(f"Entra OBO exchange failed: {exc}") from exc
+
+
+def build_entra_obo_resolver(cfg: Any, env: Mapping[str, str]) -> EntraOboResolver:
+    """Build the resolver from a profile ``auth.outbound`` (type entra_obo)."""
+    extra = getattr(cfg, "model_extra", None) or {}
+    scopes = extra.get("scopes")
+    if not isinstance(scopes, list) or not all(isinstance(x, str) for x in scopes):
+        raise ProfileError("Outbound auth 'entra_obo' requires 'scopes' (a list of strings)")
+    return EntraOboResolver(
+        scopes=scopes,
+        header=cfg.header or "Authorization",
+        scheme=extra.get("scheme", "Bearer"),
     )
 
 

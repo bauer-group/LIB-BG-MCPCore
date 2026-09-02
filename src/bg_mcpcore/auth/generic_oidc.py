@@ -50,6 +50,37 @@ def discover_endpoints(discovery_url: str, *, timeout: float = 10.0) -> dict[str
     return doc
 
 
+def _build_identity_assertion(settings: Any) -> Any | None:
+    """SEP-990 ID-JAG config, or None when no trusted issuer is configured.
+
+    Only OIDCProxy and OAuthProxy accept this. The cloud-IdP provider classes
+    (AzureProvider, GoogleProvider and the rest of fastmcp.server.auth.providers)
+    take no ``identity_assertion`` argument and no ``**kwargs`` in FastMCP 4.0.0,
+    so an Entra deployment that wants ID-JAG must run AUTH_MODE=oidc pointed at
+    its Entra endpoints rather than AUTH_MODE=entra-single.
+    """
+    issuers = list(getattr(settings, "oidc_identity_assertion_issuers", []) or [])
+    if not issuers:
+        return None
+
+    from fastmcp.server.auth import IdentityAssertion
+
+    kwargs: dict[str, Any] = {"trusted_issuers": issuers}
+    audience = getattr(settings, "oidc_identity_assertion_audience", None)
+    if audience:
+        kwargs["audience"] = audience
+    algorithm = getattr(settings, "oidc_identity_assertion_algorithm", None)
+    if algorithm:
+        kwargs["algorithm"] = algorithm
+    logger.info(
+        "auth.identity_assertion_enabled",
+        trusted_issuers=issuers,
+        audience=audience,
+        algorithm=algorithm,
+    )
+    return IdentityAssertion(**kwargs)
+
+
 def build_generic_oidc_provider(settings: OidcSettings, inbound: Any | None = None) -> Any:
     """Build an OIDCProxy (discovery) or OAuthProxy (explicit endpoints).
 
@@ -88,6 +119,9 @@ def build_generic_oidc_provider(settings: OidcSettings, inbound: Any | None = No
             kwargs["issuer_url"] = settings.oidc_issuer
         if signing_key:
             kwargs["jwt_signing_key"] = signing_key
+        identity_assertion = _build_identity_assertion(settings)
+        if identity_assertion is not None:
+            kwargs["identity_assertion"] = identity_assertion
 
         oidc_provider = OIDCProxy(**kwargs)
         logger.info(
@@ -145,6 +179,9 @@ def build_generic_oidc_provider(settings: OidcSettings, inbound: Any | None = No
     }
     if signing_key:
         kwargs["jwt_signing_key"] = signing_key
+    identity_assertion = _build_identity_assertion(settings)
+    if identity_assertion is not None:
+        kwargs["identity_assertion"] = identity_assertion
 
     oauth_provider = OAuthProxy(**kwargs)
     logger.info("auth.oidc_configured", mode="explicit", issuer=issuer, scopes=scopes)

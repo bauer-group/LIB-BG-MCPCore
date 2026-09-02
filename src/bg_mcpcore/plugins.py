@@ -144,6 +144,14 @@ def build_outbound_resolver(
         from .auth.obo import build_per_user_resolver
 
         return build_per_user_resolver(cfg, env)
+    if kind == "entra_obo":
+        from .auth.obo import build_entra_obo_resolver
+
+        return build_entra_obo_resolver(cfg, env)
+    if kind == "client_credentials":
+        from .auth.client_credentials import build_client_credentials_resolver
+
+        return build_client_credentials_resolver(cfg, env)
     if kind == "python":
         if not cfg.resolver:
             raise ProfileError("Outbound auth 'python' requires 'resolver' (dotted module:attr)")

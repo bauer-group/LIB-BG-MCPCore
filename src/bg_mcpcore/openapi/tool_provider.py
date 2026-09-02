@@ -147,6 +147,8 @@ class OpenApiToolProvider:
         icon_url: str | None,
         website_url: str | None,
         ctx: ToolContext,
+        cache: Any | None = None,
+        session_state_store: Any | None = None,
     ) -> FastMCP:
         from fastmcp import FastMCP
         from fastmcp.server.providers.openapi import MCPType, RouteMap
@@ -211,6 +213,11 @@ class OpenApiToolProvider:
             kwargs["icons"] = [Icon(src=icon_url, mime_type="image/svg+xml")]
         if website_url:
             kwargs["website_url"] = website_url
+        if cache is not None:
+            kwargs["cache_ttl"] = cache.ttl
+            kwargs["cache_scope"] = cache.scope
+        if session_state_store is not None:
+            kwargs["session_state_store"] = session_state_store
 
         mcp: FastMCP = FastMCP.from_openapi(**kwargs)
         logger.info(

@@ -59,6 +59,11 @@ _LAZY: dict[str, str] = {
     "StaticHeaderResolver": "auth",
     "MissingUpstreamToken": "auth",
     "PerUserTokenResolver": "auth",
+    "EntraOboResolver": "auth",
+    "ClientCredentialsError": "auth",
+    "ClientCredentialsResolver": "auth",
+    "build_client_credentials_resolver": "auth",
+    "build_entra_obo_resolver": "auth",
     "build_per_user_resolver": "auth",
     "get_logger": "observability",
     "init_sentry": "observability",
@@ -115,6 +120,15 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
         BearerEnvResolver as BearerEnvResolver,
     )
     from .auth import (
+        ClientCredentialsError as ClientCredentialsError,
+    )
+    from .auth import (
+        ClientCredentialsResolver as ClientCredentialsResolver,
+    )
+    from .auth import (
+        EntraOboResolver as EntraOboResolver,
+    )
+    from .auth import (
         MissingUpstreamToken as MissingUpstreamToken,
     )
     from .auth import (
@@ -130,7 +144,13 @@ if TYPE_CHECKING:  # precise types for consumers + IDEs; not executed at runtime
         StaticHeaderResolver as StaticHeaderResolver,
     )
     from .auth import (
+        build_client_credentials_resolver as build_client_credentials_resolver,
+    )
+    from .auth import (
         build_client_storage as build_client_storage,
+    )
+    from .auth import (
+        build_entra_obo_resolver as build_entra_obo_resolver,
     )
     from .auth import (
         build_generic_oidc_provider as build_generic_oidc_provider,
@@ -257,9 +277,12 @@ __all__ = [
     "AuthHeaderSource",
     "BaseMcpSettings",
     "BearerEnvResolver",
+    "ClientCredentialsError",
+    "ClientCredentialsResolver",
     "ConnectError",
     "ConnectTimeout",
     "ConstructingToolProvider",
+    "EntraOboResolver",
     "Environment",
     "HTTPError",
     "HTTPStatusError",
@@ -283,7 +306,9 @@ __all__ = [
     "available_tools",
     "build_app_from_profile",
     "build_auth_provider",
+    "build_client_credentials_resolver",
     "build_client_storage",
+    "build_entra_obo_resolver",
     "build_gateway",
     "build_generic_oidc_provider",
     "build_outbound_resolver",
