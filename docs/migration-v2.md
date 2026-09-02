@@ -22,7 +22,9 @@ grep -rn "task=True\|TaskConfig"                          --include=*.py .
 grep -rn "ctx\.elicit\|ctx\.sample\|ctx\.list_roots"      --include=*.py .
 grep -rn "pydantic"                                        pyproject.toml
 grep -rn "\-32002"                                        --include=*.py .
-grep -rn "OIDC_ISSUER"                                     .env* 2>/dev/null
+# Step 6 needs AUTH_MODE=oidc AND OIDC_DISCOVERY_URL AND OIDC_ISSUER set,
+# with OIDC_ISSUER != PUBLIC_BASE_URL. All four - see the runbook.
+grep -rnE "AUTH_MODE|OIDC_DISCOVERY_URL|OIDC_ISSUER"      .env* 2>/dev/null
 ```
 
 A typical server is a four-line `main.py`, a `profile.json`, and maybe a
@@ -225,25 +227,138 @@ and [session state](#what-you-get-for-it).
 
 ---
 
-## Step 6 — OAuth re-authorization, if `issuer_url` differs from `base_url`
+## Step 6 — OAuth re-authorization (runbook)
 
-Skip this unless your deployment sets `OIDC_ISSUER` to something other than its
-public base URL.
+Applies to a **narrow, precisely-defined** set of deployments. Most servers,
+including every Entra and Google deployment, are not affected. Work the decision
+below before scheduling anything.
+
+### Are you affected?
 
 FastMCP 4 corrects a spec violation: the `issuer` published in authorization
-server metadata, and the `iss` claim on every token the server mints, now come
-from `issuer_url` rather than `base_url`. The verifier compares `iss` exactly,
-and refresh tokens carry it too — so **clients cannot refresh across the
-upgrade**. It is a one-time full re-authorization.
+server metadata, and the `iss` claim on every token the server **mints**, now
+come from `issuer_url` instead of `base_url`. In bg-mcpcore exactly one line can
+set `issuer_url` — [`auth/generic_oidc.py`](https://github.com/bauer-group/LIB-BG-MCPCore/blob/main/src/bg_mcpcore/auth/generic_oidc.py) —
+and it is reached only on the OIDC **discovery** path. So **all four** of these
+must hold at once:
 
-- Interactive clients re-prompt and recover on their own.
-- A headless client holding a long-lived refresh token needs someone to
-  re-authorize it.
+| # | Condition | Why |
+| --- | --- | --- |
+| 1 | `AUTH_MODE=oidc` | No other auth mode ever passes `issuer_url` |
+| 2 | `OIDC_DISCOVERY_URL` is **set** | Only the discovery path (`OIDCProxy`) forwards it |
+| 3 | `OIDC_ISSUER` is set and non-empty | The value is applied behind a truthiness guard |
+| 4 | `OIDC_ISSUER` differs from `PUBLIC_BASE_URL` | Equal values produce byte-identical metadata |
 
-Schedule the deploy for a window where that is acceptable. Servers that leave
-`OIDC_ISSUER` unset, or set it equal to the base URL, are unaffected.
+Run this against a deployment's environment — it answers the question outright:
 
----
+```bash
+python - <<'EOF'
+import os
+from pydantic import AnyHttpUrl
+mode   = os.getenv("AUTH_MODE", "")
+disc   = os.getenv("OIDC_DISCOVERY_URL", "")
+issuer = os.getenv("OIDC_ISSUER", "")
+base   = os.getenv("PUBLIC_BASE_URL", "")
+norm   = lambda u: str(AnyHttpUrl(u)) if u else ""
+affected = bool(mode == "oidc" and disc and issuer and norm(issuer) != norm(base))
+print(f"AUTH_MODE={mode!r} DISCOVERY={'set' if disc else 'unset'}")
+print(f"issuer={norm(issuer)!r}
+base  ={norm(base)!r}")
+print("AFFECTED - schedule a re-auth window" if affected else "NOT AFFECTED - upgrade normally")
+EOF
+```
+
+Two independent cross-checks, in case you cannot read the environment directly:
+
+```bash
+# BEFORE the upgrade — ask the running server what it publishes today.
+# If "issuer" already equals your public base URL, nothing changes for you.
+curl -s https://mcp.example.com/.well-known/oauth-authorization-server | jq .issuer
+
+# AFTER the upgrade — FastMCP logs this line ONLY when the two differ:
+#   "OAuth endpoints at <base_url>, issuer at <issuer_url>."
+# Its absence from a start-up log is positive confirmation you were not affected.
+```
+
+### Cases that look affected but are not
+
+- **`AUTH_MODE` is anything but `oidc`.** `entra-single`, `entra-multi`,
+  `google` and all twelve spec-driven providers construct their provider without
+  `issuer_url`; there is no profile or environment route to it.
+- **`AUTH_MODE=oidc` with `OIDC_DISCOVERY_URL` unset** — the explicit-endpoint
+  path — **regardless of `OIDC_ISSUER`.** This is the important non-obvious one.
+  There, `OIDC_ISSUER` configures the `JWTVerifier`'s *expected* issuer for
+  tokens the server **receives** from the IdP. That is a different thing from
+  `issuer_url`, which is the identity the server **publishes and mints under**.
+  The explicit path never passes `issuer_url` at all.
+- **An `auth.oidc_issuer_derived` warning in your logs.** That is the explicit
+  path guessing the *verifier's* expected issuer from `OIDC_AUTH_URI`. It is
+  worth fixing on its own (the guess is wrong for Keycloak), but it has nothing
+  to do with this migration.
+- **A trailing-slash difference on a bare origin.** `https://mcp.example.com`
+  and `https://mcp.example.com/` normalize to the same URL. On a base URL that
+  carries a *path* the trailing slash is significant — `…/mcp` and `…/mcp/` do
+  not compare equal.
+
+### What breaks, and for how long
+
+Both **access and refresh** tokens carry the `iss` claim, and the verifier
+compares it as an exact string — no normalization, no legacy-issuer allowlist,
+no grace period. A refresh token minted under the old issuer is rejected before
+any exchange logic runs, so **clients cannot refresh their way across the
+upgrade**. The only recovery is a full authorization-code round trip.
+
+| Client | Impact |
+| --- | --- |
+| Interactive (IDE, desktop, browser) | Re-prompted at the consent screen, recovers unattended |
+| Headless service holding a long-lived refresh token | **Stays broken until a human re-authorizes it** |
+| Dynamically-registered (DCR) clients | Registration survives — re-authorize only, no re-registration |
+
+Client registrations live in the OAuth state store and carry no `iss`, so
+nothing needs re-registering and the store needs no migration or purge.
+
+One extra credential to check in the same window: if
+`OIDC_IDENTITY_ASSERTION_ISSUERS` is configured, SEP-990 ID-JAG assertions do
+**not** survive — their expected audience defaults to the published issuer.
+Repoint their `aud` at the IdP, or set `OIDC_IDENTITY_ASSERTION_AUDIENCE` to pin
+it, which also makes any future issuer change free.
+
+### Procedure
+
+**Before**
+
+1. Run the check above across every deployment and list the affected ones. Being
+   on the affected list is the exception; if everything comes back NOT AFFECTED,
+   skip the rest of this step entirely.
+2. For each affected server, enumerate its headless clients — those are the ones
+   that need a person. Interactive users need warning, not action.
+3. Pick a window when a re-consent prompt is acceptable. Announce it.
+4. Decide about `OIDC_ISSUER` while you are here. If it is set only because a
+   config template carried it over and it *should* equal the base URL, aligning
+   the two values before the upgrade both removes the problem and simplifies the
+   deployment. Changing it is itself a re-auth event, so do it in the same window.
+
+**During**
+
+5. Deploy the bg-mcpcore 2.0 build.
+6. Confirm the published issuer is what you intend:
+   `curl -s $PUBLIC_BASE_URL/.well-known/oauth-authorization-server | jq .issuer`
+7. Complete one interactive login end to end and call one tool. A `401` with
+   `Invalid token issuer` at this point means a client is still presenting an
+   old token — expected until it re-authorizes, not a failed deploy.
+
+**After**
+
+8. Re-authorize the headless clients from step 2.
+9. Watch for `401`s over the following day; each one is a client that has not
+   been through the flow yet.
+
+**Rolling back**
+
+Reverting to 1.x flips `iss` back to the base URL and forces a **second** full
+re-authorization — every client that re-authorized after the upgrade breaks
+again. Rollback is therefore not free here, which is an argument for validating
+on one low-traffic server first rather than planning to undo a fleet-wide change.
 
 ## Step 7 — Verify
 
