@@ -181,9 +181,9 @@
       - "^hotfix/"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Removed in the FastMCP 4 branch -- these blocks had no consumer anywhere in
-# the workflow chain and were only ever visible to actions/labeler, which read
-# each of them as a label name and failed the run:
+# Removed -- these blocks had no consumer anywhere in the workflow chain and
+# were only ever visible to actions/labeler, which read each of them as a
+# label name and failed the run:
 #
 #   size-labels:     the `size-labels: true` workflow input drives a bash step
 #                    in the composite action with its OWN hardcoded thresholds
