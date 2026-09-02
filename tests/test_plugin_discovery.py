@@ -126,3 +126,22 @@ def test_unknown_outbound_type_error_names_every_builtin() -> None:
     message = str(excinfo.value)
     for kind in BUILTIN_OUTBOUND_TYPES:
         assert kind in message, f"{kind!r} missing from: {message}"
+
+
+def test_docs_list_every_builtin_outbound_type() -> None:
+    """docs/plugins.md's built-ins column must match the dispatch.
+
+    It had already fallen behind before this branch (missing per_user_token) and
+    fell two further behind with entra_obo and client_credentials, so pin it.
+    """
+    from pathlib import Path
+
+    from bg_mcpcore.plugins import BUILTIN_OUTBOUND_TYPES
+
+    doc = Path(__file__).resolve().parent.parent / "docs" / "plugins.md"
+    row = next(
+        line for line in doc.read_text(encoding="utf-8").splitlines()
+        if "`bg_mcpcore.auth_resolvers`" in line
+    )
+    missing = [k for k in BUILTIN_OUTBOUND_TYPES if f"`{k}`" not in row]
+    assert not missing, f"docs/plugins.md omits built-in outbound types: {missing}"
