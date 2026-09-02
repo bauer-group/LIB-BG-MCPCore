@@ -18,9 +18,9 @@ For local setup and the dependency model see [installation](installation.md); fo
 | --- | --- | --- |
 | `openapi` | `pyyaml` (the OpenAPI `$ref` resolver and `FastMCP.from_openapi` are core/stdlib) | the profile sets `tools.source = "openapi"` and ingests a **YAML** spec |
 | `redis` | `py-key-value-aio[redis]` | you run more than one replica, or want the OAuth store on a shared, operator-keyed backend |
-| `oauth-providers` | (marker extra — Entra and Google ship inside FastMCP) | the server opts into a cloud IdP inbound mode; kept explicit for clarity |
+| `oauth-providers` | `fastmcp[azure]` — Entra and Google providers ship inside FastMCP; this adds azure-identity, which the native on-behalf-of exchange needs | the server opts into a cloud IdP inbound mode, or sets `auth.outbound.type = "entra_obo"` |
 | `tasks` | `fastmcp[tasks]` (docket) | the server exposes long-running tasks such as bulk exports |
-| `testkit` | `pytest`, `pytest-asyncio`, `respx` (exposed as a pytest11 plugin) | running the reusable test fixtures — **not** a runtime dependency |
+| `testkit` | `pytest`, `pytest-asyncio`, `pytest-httpx2` (exposed as a pytest11 plugin) | running the reusable test fixtures — **not** a runtime dependency. `respx` alone cannot patch httpx2, which is why this is not plain `respx` |
 
 !!! tip "Recommended production set"
     For a typical spec-driven, OAuth-protected, multi-replica server, install:
@@ -89,6 +89,18 @@ AUTH_STORAGE_ENCRYPTION_KEY=<output of: python -c "from cryptography.fernet impo
 
 # --- OR single-instance disk mode (omit AUTH_REDIS_URL) -----------------------
 # AUTH_DISK_STORAGE_PATH=/app/data/oauth-storage   # default; MUST be a volume
+
+# --- Optional: session state across replicas / restarts (FastMCP 4) -----------
+# UserSession / SessionId default to PROCESS memory, which is lossy behind a
+# load balancer. Enabling this reuses the OAuth store above. Needs auth.
+# MCP_SESSION_STATE_ENABLED=true
+
+# --- Optional: enterprise identity assertion, SEP-990 (AUTH_MODE=oidc) --------
+# Lets a corporate IdP assert an employee's identity with no browser flow.
+# Setting the issuer list is what enables the grant.
+# OIDC_IDENTITY_ASSERTION_ISSUERS=https://login.acme-corp.com
+# OIDC_IDENTITY_ASSERTION_AUDIENCE=https://mcp.example.com   # pin it; see below
+# OIDC_IDENTITY_ASSERTION_ALGORITHM=RS256                    # default
 
 # --- Transport ----------------------------------------------------------------
 # MCP_TRANSPORT=streamable-http              # default
@@ -260,6 +272,16 @@ volumes:
 
 The disk store is **single-instance only** — each replica would hold its own private OAuth state, so a client whose login landed on replica A would fail on replica B. To run **more than one replica**, switch to the Redis store: set `AUTH_REDIS_URL` and a dedicated `AUTH_STORAGE_ENCRYPTION_KEY`, install the `redis` extra, and drop the per-replica volume. All replicas then share one durable, encrypted, restart-stable OAuth state store.
 
+!!! warning "Session state is process-local too"
+    If any tool uses FastMCP's `UserSession` / `SessionId`, the same reasoning
+    applies a second time: the default session-state store lives in **process
+    memory**, so a value written on replica A is invisible on replica B and is
+    lost on restart — silently, with no error. Set
+    `MCP_SESSION_STATE_ENABLED=true` to move it onto the same shared encrypted
+    store as the OAuth state. It requires an authenticated server, because the
+    bucket is keyed on the caller's identity, and the server refuses to start
+    otherwise. A single-replica deployment can leave it off.
+
 ```yaml
 services:
   mcp-server:
@@ -286,6 +308,7 @@ volumes:
     - `ENVIRONMENT=production` with a real `AUTH_MODE` (never `none`).
     - `AUTH_JWT_SIGNING_KEY` generated and stable; not a `CHANGE_ME` value.
     - OAuth store persisted: Redis (multi-replica) **or** a mounted disk volume (single instance).
+    - `MCP_SESSION_STATE_ENABLED=true` if any tool uses `UserSession`/`SessionId` and you run more than one replica.
     - In Redis mode, `AUTH_STORAGE_ENCRYPTION_KEY` is a valid, **dedicated** Fernet key.
     - Reverse proxy terminates TLS and `RATE_LIMITER_TRUSTED_PROXY_HOPS` matches the hop count.
     - Probes hit `/healthz`.

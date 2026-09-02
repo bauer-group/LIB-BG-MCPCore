@@ -41,9 +41,9 @@ pays only for what it imports.
 |---|---|---|
 | `openapi` | `pyyaml` (YAML spec ingestion) | a profile uses `tools.source: openapi` |
 | `redis` | `py-key-value-aio[redis]` | the OAuth-state store should live in Redis (multi-replica) |
-| `oauth-providers` | *(marker — Entra/Google ship in FastMCP)* | the server opts into a cloud IdP inbound mode |
+| `oauth-providers` | `fastmcp[azure]` (Entra/Google providers ship in FastMCP; this adds azure-identity for the native on-behalf-of exchange) | the server opts into a cloud IdP inbound mode, or uses `auth.outbound.type: entra_obo` |
 | `tasks` | `fastmcp[tasks]` (docket) | the server exposes long-running tasks (bulk exports) |
-| `testkit` | `pytest`, `pytest-asyncio`, `respx` | running the reusable pytest fixtures in a consumer suite |
+| `testkit` | `pytest`, `pytest-asyncio`, `pytest-httpx2` | running the reusable pytest fixtures in a consumer suite (`mock_upstream` / `upstream_response`) |
 | `dev` | the full test + lint + build toolchain | contributing to the library itself |
 | `docs` | `mkdocs`, `mkdocs-material`, `mkdocstrings` | building this documentation site |
 

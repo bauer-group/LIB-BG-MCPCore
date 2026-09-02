@@ -123,6 +123,9 @@ and so on. Configuration is entirely env-driven via the `OIDC_*` settings:
 | `OIDC_TOKEN_URI` | `oidc_token_uri` | unset | Explicit mode: token endpoint |
 | `OIDC_JWKS_URI` | `oidc_jwks_uri` | unset | Explicit mode: JWKS endpoint |
 | `OIDC_SCOPES` | `oidc_scopes` | `openid profile email` | Space-separated required scopes |
+| `OIDC_IDENTITY_ASSERTION_ISSUERS` | `oidc_identity_assertion_issuers` | unset | CSV of issuers whose SEP-990 ID-JAG assertions this server trusts. Setting it **enables** the `jwt-bearer` grant; empty leaves it rejected as unsupported |
+| `OIDC_IDENTITY_ASSERTION_AUDIENCE` | `oidc_identity_assertion_audience` | published issuer | Expected `aud` on assertions. Pin it to survive an `issuer_url` change without re-minting |
+| `OIDC_IDENTITY_ASSERTION_ALGORITHM` | `oidc_identity_assertion_algorithm` | `RS256` | JWS algorithm used to verify assertions (asymmetric: `RS*`/`PS*`/`ES*`) |
 | `OIDC_USERNAME_CLAIM` | `oidc_username_claim` | `preferred_username` | Claim used as the username |
 
 The mode chooses between two paths based on whether a discovery URL is set:
@@ -414,8 +417,19 @@ fronts. It is selected by `auth.outbound.type` in the profile and implements the
 | `none` | `NoAuthResolver` | — | No outbound auth; both halves return `{}` |
 | `static_header` | `StaticHeaderResolver` | `header` + (`value_from_env` \| `value`) | Static custom header at construction |
 | `bearer_env` | `BearerEnvResolver` | `value_from_env` \| `value` | Static `Authorization: Bearer <token>` |
+| `per_user_token` | `PerUserTokenResolver` | — (optional `static_fallback_env`) | **Per-call.** Forwards the caller's upstream token, from the access-token claims then OAuth-state storage |
+| `entra_obo` | `EntraOboResolver` | `scopes` (non-empty list) | **Per-call.** Native Entra on-behalf-of via azure-identity; needs `[oauth-providers]` |
+| `client_credentials` | `ClientCredentialsResolver` | `token_url` + `client_id_env` + `client_secret_env` | **Per-call.** OAuth2 client-credentials service token, cached and re-minted before expiry |
 | `python` | *(your class)* | `resolver` (dotted `module:attr`) | Custom resolver, including per-call OBO |
 | *(plugin)* | via `bg_mcpcore.auth_resolvers` | per plugin | Third-party resolver type |
+
+The three per-call types resolve their credential per request, so
+`default_headers()` is empty and the **OpenAPI tool source is not covered by
+them** — pair those with a `python` tool source using `ctx.request`. On the
+`entra-*` inbound modes prefer `entra_obo` over `per_user_token`: it mints a
+token through a supported FastMCP API instead of reading FastMCP's OAuth-storage
+internals, and can request scopes the caller's own token never carried. Full key
+reference: [profile schema](profiles.md#authoutbound).
 
 For `static_header` and `bearer_env`, the secret is read from
 `value_from_env` (an env-var name) at build time; an inline `value` is also

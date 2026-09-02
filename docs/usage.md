@@ -60,10 +60,14 @@ map 1:1 to upper-snake env vars (`public_base_url` ← `PUBLIC_BASE_URL`).
 | `AUTH_DISK_STORAGE_PATH` | `/app/data/oauth-storage` | mount as a volume in production |
 | `OIDC_DISCOVERY_URL` | unset | discovery doc URL (recommended path); derives all endpoints + issuer |
 | `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | — | OAuth client credentials (`AUTH_MODE=oidc`) |
-| `OIDC_ISSUER` | unset | **required** for explicit-endpoint mode (no discovery URL); the token `iss` |
+| `OIDC_ISSUER` | unset | Explicit-endpoint mode: set it — otherwise a value is *derived* from `OIDC_AUTH_URI` and only warned about, which is wrong for many IdPs. Discovery mode: optional override, and the one setting behind the [2.0 re-auth runbook](migration-v2.md#step-6-oauth-re-authorization-runbook) |
 | `OIDC_AUTH_URI` / `OIDC_TOKEN_URI` / `OIDC_JWKS_URI` | — | explicit endpoints (when no discovery URL) |
 | `OIDC_SCOPES` | `openid profile email` | space-separated |
 | `OIDC_USERNAME_CLAIM` | `preferred_username` | token claim used as the username |
+| `OIDC_IDENTITY_ASSERTION_ISSUERS` | unset | CSV of trusted SEP-990 ID-JAG issuers; setting it enables the `jwt-bearer` grant (`AUTH_MODE=oidc`) |
+| `OIDC_IDENTITY_ASSERTION_AUDIENCE` | published issuer | expected `aud` on assertions; pin it to survive an issuer change |
+| `OIDC_IDENTITY_ASSERTION_ALGORITHM` | `RS256` | JWS algorithm for assertion verification |
+| `MCP_SESSION_STATE_ENABLED` | `false` | `true` → FastMCP's `UserSession`/`SessionId` use the shared encrypted store instead of process memory. Requires an authenticated server; needed behind a load balancer |
 | `OIDC_USERINFO_URI` | unset | optional userinfo endpoint |
 
 ### Rate limiting + observability

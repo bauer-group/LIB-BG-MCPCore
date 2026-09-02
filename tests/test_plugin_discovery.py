@@ -76,3 +76,53 @@ async def test_third_party_source_registers_its_tool(monkeypatch: pytest.MonkeyP
     assert count == 1
     names = {getattr(t, "name", "") for t in await mcp.list_tools()}
     assert "echo" in names
+
+
+# ── the outbound dispatch and its error message must not drift apart ──────────
+
+
+def test_known_outbound_types_match_dispatch() -> None:
+    """Every `kind == "x"` branch must appear in the "Known:" list, and vice versa.
+
+    These drifted once already: `entra_obo` and `client_credentials` were
+    dispatched but omitted from the error, so a user with a typo was told the
+    feature did not exist. Derived from the source rather than restated, so the
+    test cannot rot alongside the thing it guards.
+    """
+    import ast
+    import inspect
+
+    from bg_mcpcore.plugins import BUILTIN_OUTBOUND_TYPES, build_outbound_resolver
+
+    tree = ast.parse(inspect.getsource(build_outbound_resolver))
+    dispatched = {
+        node.comparators[0].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Compare)
+        and isinstance(node.left, ast.Name)
+        and node.left.id == "kind"
+        and isinstance(node.ops[0], ast.Eq)
+        and isinstance(node.comparators[0], ast.Constant)
+        and isinstance(node.comparators[0].value, str)
+    }
+    assert dispatched, "could not find any `kind == ...` branches — did the shape change?"
+    assert dispatched == set(BUILTIN_OUTBOUND_TYPES), (
+        f"dispatch and BUILTIN_OUTBOUND_TYPES disagree: "
+        f"dispatched-only={dispatched - set(BUILTIN_OUTBOUND_TYPES)}, "
+        f"listed-only={set(BUILTIN_OUTBOUND_TYPES) - dispatched}"
+    )
+
+
+def test_unknown_outbound_type_error_names_every_builtin() -> None:
+    """The error a mistyped profile produces must not hide a real type."""
+    import pytest
+
+    from bg_mcpcore.plugins import BUILTIN_OUTBOUND_TYPES, build_outbound_resolver
+    from bg_mcpcore.profile.loader import ProfileError
+    from bg_mcpcore.profile.models import OutboundAuthConfig
+
+    with pytest.raises(ProfileError) as excinfo:
+        build_outbound_resolver(OutboundAuthConfig(type="client_credential"), env={})
+    message = str(excinfo.value)
+    for kind in BUILTIN_OUTBOUND_TYPES:
+        assert kind in message, f"{kind!r} missing from: {message}"
