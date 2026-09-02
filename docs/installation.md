@@ -32,7 +32,7 @@ only the optional extras a given server actually needs.
 
 ## :material-package-variant:  Optional extras
 
-The core depends only on `fastmcp`, `httpx`, `pydantic`, `pydantic-settings`,
+The core depends only on `fastmcp`, `httpx2`, `pydantic`, `pydantic-settings`,
 `structlog`, `rich`, `cryptography`, `typer`, and the disk-backed encrypted state
 store. Everything volatile or single-consumer lives in an extra, so a server
 pays only for what it imports.

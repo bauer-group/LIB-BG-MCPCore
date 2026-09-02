@@ -109,7 +109,7 @@ keys: `scheme`, `claims`, `storage_key_prefixes`, `static_fallback_env`,
 `value_from_env` names the env var holding the secret (resolved fail-closed at
 boot); use `value` only for non-secret literals. A resolver splits credentials
 into **static** `default_headers()` (applied once at client construction — this
-also covers the bare httpx client the OpenAPI source drives) and **per-call**
+also covers the bare httpx2 client the OpenAPI source drives) and **per-call**
 `auth_headers(ctx)` (resolved per request; must **raise** when no credential is
 available — never silently fall back to a static default). See the
 [security model](security.md) and [Tier 3](tiers.md#tier-3-mostly-python).

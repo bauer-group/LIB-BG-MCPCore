@@ -81,7 +81,7 @@ through each with a full profile + code.
 - **Modular** — new auth modes / tool sources / resolvers are pip-installable
   plugins registered via Python entry points, never core edits.
 - **Configurable** — every standard behaviour is an overridable profile default.
-- **Stable** — the mandatory core depends only on fastmcp/pydantic/httpx/
+- **Stable** — the mandatory core depends only on fastmcp/pydantic/httpx2/
   structlog/cryptography; volatile concerns live in optional extras.
 - **Secure** — fail-closed auth invariants are enforced in core and a profile
   cannot switch them off.
