@@ -34,7 +34,7 @@ classifiers = [
 # docket) live in the optional-dependencies extras below — a server pays only
 # for what it imports.
 dependencies = [
-    "fastmcp>=3.0.0,<4.0.0",
+    "fastmcp>=3.0.0,<5.0.0",
     "httpx>=0.28.1,<1.0.0",
     "pydantic>=2.10.0,<3.0.0",
     "pydantic-settings>=2.14.1,<3.0.0",
@@ -57,7 +57,7 @@ redis = ["py-key-value-aio[redis]>=0.4.4,<1.0.0"]
 # is a marker that a server opted into them — kept explicit for clarity).
 oauth-providers = []
 # Long-running task execution (bulk exports) via docket.
-tasks = ["fastmcp[tasks]>=3.0.0,<4.0.0"]
+tasks = ["fastmcp[tasks]>=3.0.0,<5.0.0"]
 # Reusable pytest fixtures + stubs, exposed as a pytest11 plugin.
 testkit = [
     "pytest>=8.3.0,<10.0.0",
