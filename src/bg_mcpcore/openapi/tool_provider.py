@@ -31,11 +31,11 @@ logger = get_logger("bg-mcpcore.openapi.tools")
 # HTTP method -> MCP safety hints. GET is safe-to-auto; everything else needs
 # human approval (defense-in-depth: clients may ignore these hints).
 _METHOD_ANNOTATIONS: dict[str, dict[str, bool]] = {
-    "GET": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
-    "POST": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True},
-    "PUT": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True, "openWorldHint": True},
-    "PATCH": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True, "openWorldHint": True},
-    "DELETE": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": True, "openWorldHint": True},
+    "GET": {"read_only_hint": True, "destructive_hint": False, "open_world_hint": True},
+    "POST": {"read_only_hint": False, "destructive_hint": True, "idempotent_hint": False, "open_world_hint": True},
+    "PUT": {"read_only_hint": False, "destructive_hint": True, "idempotent_hint": True, "open_world_hint": True},
+    "PATCH": {"read_only_hint": False, "destructive_hint": True, "idempotent_hint": True, "open_world_hint": True},
+    "DELETE": {"read_only_hint": False, "destructive_hint": True, "idempotent_hint": True, "open_world_hint": True},
 }
 
 
@@ -147,6 +147,8 @@ class OpenApiToolProvider:
         icon_url: str | None,
         website_url: str | None,
         ctx: ToolContext,
+        cache: Any | None = None,
+        session_state_store: Any | None = None,
     ) -> FastMCP:
         from fastmcp import FastMCP
         from fastmcp.server.providers.openapi import MCPType, RouteMap
@@ -208,9 +210,14 @@ class OpenApiToolProvider:
         if lifespan is not None:
             kwargs["lifespan"] = lifespan
         if icon_url:
-            kwargs["icons"] = [Icon(src=icon_url, mimeType="image/svg+xml")]
+            kwargs["icons"] = [Icon(src=icon_url, mime_type="image/svg+xml")]
         if website_url:
             kwargs["website_url"] = website_url
+        if cache is not None:
+            kwargs["cache_ttl"] = cache.ttl
+            kwargs["cache_scope"] = cache.scope
+        if session_state_store is not None:
+            kwargs["session_state_store"] = session_state_store
 
         mcp: FastMCP = FastMCP.from_openapi(**kwargs)
         logger.info(

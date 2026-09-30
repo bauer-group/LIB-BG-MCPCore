@@ -5,7 +5,7 @@ so the contract is deliberately split into two mutually-exclusive halves:
 
 * ``default_headers()`` — STATIC credentials applied once at AsyncClient
   construction. Used by gateway-style servers (Shlink's ``X-Api-Key``). These
-  also cover FastMCP's bare-httpx-client path used by the OpenAPI tool source.
+  also cover FastMCP's bare-httpx2-client path used by the OpenAPI tool source.
 * ``auth_headers(ctx)`` — PER-CALL dynamic credentials resolved from the request
   context (e.g. a per-user bearer for on-behalf-of). A resolver that resolves
   per-call MUST raise when no credential is available rather than returning ``{}``

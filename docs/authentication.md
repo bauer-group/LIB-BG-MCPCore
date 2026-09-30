@@ -118,11 +118,14 @@ and so on. Configuration is entirely env-driven via the `OIDC_*` settings:
 | `OIDC_CLIENT_ID` | `oidc_client_id` | — | **Required** (both paths) |
 | `OIDC_CLIENT_SECRET` | `oidc_client_secret` | — | **Required** (both paths) |
 | `OIDC_DISCOVERY_URL` | `oidc_discovery_url` | unset | Selects the discovery path when set |
-| `OIDC_ISSUER` | `oidc_issuer` | unset | **Required** in explicit mode; optional override in discovery mode |
+| `OIDC_ISSUER` | `oidc_issuer` | unset | Explicit mode: set it (a guess is derived + warned about otherwise). Discovery mode: optional override — and the one setting behind the [2.0 re-auth runbook](migration-v2.md#step-6-oauth-re-authorization-runbook) |
 | `OIDC_AUTH_URI` | `oidc_auth_uri` | unset | Explicit mode: authorization endpoint |
 | `OIDC_TOKEN_URI` | `oidc_token_uri` | unset | Explicit mode: token endpoint |
 | `OIDC_JWKS_URI` | `oidc_jwks_uri` | unset | Explicit mode: JWKS endpoint |
 | `OIDC_SCOPES` | `oidc_scopes` | `openid profile email` | Space-separated required scopes |
+| `OIDC_IDENTITY_ASSERTION_ISSUERS` | `oidc_identity_assertion_issuers` | unset | CSV of issuers whose SEP-990 ID-JAG assertions this server trusts. Setting it **enables** the `jwt-bearer` grant; empty leaves it rejected as unsupported |
+| `OIDC_IDENTITY_ASSERTION_AUDIENCE` | `oidc_identity_assertion_audience` | published issuer | Expected `aud` on assertions. Pin it to survive an `issuer_url` change without re-minting |
+| `OIDC_IDENTITY_ASSERTION_ALGORITHM` | `oidc_identity_assertion_algorithm` | `RS256` | JWS algorithm used to verify assertions (asymmetric: `RS*`/`PS*`/`ES*`) |
 | `OIDC_USERNAME_CLAIM` | `oidc_username_claim` | `preferred_username` | Claim used as the username |
 
 The mode chooses between two paths based on whether a discovery URL is set:
@@ -155,18 +158,28 @@ The mode chooses between two paths based on whether a discovery URL is set:
     OIDC_AUTH_URI=https://idp.example.com/oauth/authorize
     OIDC_TOKEN_URI=https://idp.example.com/oauth/token
     OIDC_JWKS_URI=https://idp.example.com/oauth/jwks
-    OIDC_ISSUER=https://idp.example.com/realms/main   # REQUIRED
+    OIDC_ISSUER=https://idp.example.com/realms/main   # set it - see the warning below
     OIDC_CLIENT_ID=mcp-server
     OIDC_CLIENT_SECRET=...
     ```
 
-    !!! warning "Explicit mode requires `OIDC_ISSUER`"
-        The issuer must match the token's `iss` claim exactly, and it **cannot
-        be derived** from `OIDC_AUTH_URI` (a Keycloak authorize endpoint, for
-        example, sits several path segments below the issuer). Omitting
-        `OIDC_ISSUER` in explicit mode raises at boot rather than minting a
-        verifier that silently rejects every token. The discovery path does not
-        have this requirement — it reads the issuer from the IdP's metadata.
+    !!! warning "Always set `OIDC_ISSUER` in explicit mode"
+        The issuer must match the token's `iss` claim exactly. Omitting it does
+        **not** fail the boot: the server derives a guess from `OIDC_AUTH_URI`
+        by dropping the last path segment, logs `auth.oidc_issuer_derived` at
+        WARNING, and starts. That guess is wrong for many IdPs — a Keycloak
+        authorize endpoint, for example, sits several path segments below the
+        issuer — and the result is a verifier that rejects every token at
+        runtime instead of a clear failure at boot. Treat the warning as an
+        error. The discovery path has no such problem: it reads the issuer from
+        the IdP's metadata.
+
+    !!! note "This is not the same setting as the published issuer"
+        `OIDC_ISSUER` here configures the **verifier** — the `iss` this server
+        expects on tokens it *receives* from the IdP. On the discovery path the
+        same variable additionally sets `issuer_url`, the identity this server
+        *publishes and mints under*. Only that second role is involved in the
+        [2.0 re-authorization runbook](migration-v2.md#step-6-oauth-re-authorization-runbook).
 
 ### `entra-single` / `entra-multi` — Microsoft Entra ID
 
@@ -387,7 +400,7 @@ fronts. It is selected by `auth.outbound.type` in the profile and implements the
 - **`default_headers()`** — STATIC credentials applied **once** at
   `AsyncClient` construction. Used by gateway-style servers where one shared
   service credential covers all callers (e.g. Shlink's `X-Api-Key`). These also
-  cover FastMCP's bare-httpx-client path used by the OpenAPI tool source.
+  cover FastMCP's bare-httpx2-client path used by the OpenAPI tool source.
 - **`auth_headers(ctx)`** — PER-CALL dynamic credentials resolved from the
   request context (e.g. a per-user bearer for on-behalf-of).
 
@@ -404,8 +417,19 @@ fronts. It is selected by `auth.outbound.type` in the profile and implements the
 | `none` | `NoAuthResolver` | — | No outbound auth; both halves return `{}` |
 | `static_header` | `StaticHeaderResolver` | `header` + (`value_from_env` \| `value`) | Static custom header at construction |
 | `bearer_env` | `BearerEnvResolver` | `value_from_env` \| `value` | Static `Authorization: Bearer <token>` |
+| `per_user_token` | `PerUserTokenResolver` | — (optional `static_fallback_env`) | **Per-call.** Forwards the caller's upstream token, from the access-token claims then OAuth-state storage |
+| `entra_obo` | `EntraOboResolver` | `scopes` (non-empty list) | **Per-call.** Native Entra on-behalf-of via azure-identity; needs `[oauth-providers]` |
+| `client_credentials` | `ClientCredentialsResolver` | `token_url` + `client_id_env` + `client_secret_env` | **Per-call.** OAuth2 client-credentials service token, cached and re-minted before expiry |
 | `python` | *(your class)* | `resolver` (dotted `module:attr`) | Custom resolver, including per-call OBO |
 | *(plugin)* | via `bg_mcpcore.auth_resolvers` | per plugin | Third-party resolver type |
+
+The three per-call types resolve their credential per request, so
+`default_headers()` is empty and the **OpenAPI tool source is not covered by
+them** — pair those with a `python` tool source using `ctx.request`. On the
+`entra-*` inbound modes prefer `entra_obo` over `per_user_token`: it mints a
+token through a supported FastMCP API instead of reading FastMCP's OAuth-storage
+internals, and can request scopes the caller's own token never carried. Full key
+reference: [profile schema](profiles.md#authoutbound).
 
 For `static_header` and `bearer_env`, the secret is read from
 `value_from_env` (an env-var name) at build time; an inline `value` is also

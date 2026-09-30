@@ -1,6 +1,6 @@
 """Config-driven extensions: operator-defined prompts + resources.
 
-Lightweight (fastmcp + httpx only), so this lives in core. Export tasks (bespoke
+Lightweight (fastmcp + httpx2 only), so this lives in core. Export tasks (bespoke
 bulk exporters) are server business logic, not part of this generic layer.
 """
 

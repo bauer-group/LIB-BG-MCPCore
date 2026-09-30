@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
+import httpx2
 
 from ..auth.resolvers import AuthHeaderSource, NoAuthResolver
 from ..observability import get_logger
@@ -30,7 +30,7 @@ logger = get_logger("bg-mcpcore.http")
 
 
 class UpstreamClient:
-    """Thin httpx wrapper: base URL, timeouts, outbound auth, retry/backoff."""
+    """Thin httpx2 wrapper: base URL, timeouts, outbound auth, retry/backoff."""
 
     def __init__(
         self,
@@ -55,17 +55,17 @@ class UpstreamClient:
         trimmed = api_base_path.strip("/")
         full_base = base_url.rstrip("/") + (f"/{trimmed}" if trimmed else "")
         headers = {"User-Agent": user_agent, **self._auth.default_headers()}
-        self._client = httpx.AsyncClient(
+        self._client = httpx2.AsyncClient(
             base_url=full_base,
-            timeout=httpx.Timeout(timeout),
+            timeout=httpx2.Timeout(timeout),
             verify=verify_tls,
             headers=headers,
             follow_redirects=False,
-            limits=httpx.Limits(max_connections=64, max_keepalive_connections=16),
+            limits=httpx2.Limits(max_connections=64, max_keepalive_connections=16),
         )
 
     @property
-    def httpx_client(self) -> httpx.AsyncClient:
+    def httpx_client(self) -> httpx2.AsyncClient:
         """The raw client — handed to FastMCP.from_openapi by the OpenAPI source."""
         return self._client
 
@@ -77,7 +77,7 @@ class UpstreamClient:
         ctx: Any | None = None,
         headers: dict[str, str] | None = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> httpx2.Response:
         """Issue a request, merging per-call auth headers and retrying transients."""
         merged = dict(headers or {})
         merged.update(await self._auth.auth_headers(ctx))
@@ -93,8 +93,8 @@ class UpstreamClient:
                 response = await self._client.request(
                     method, path, headers=merged or None, **kwargs
                 )
-            except httpx.TransportError as exc:
-                connect_only = isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout))
+            except httpx2.TransportError as exc:
+                connect_only = isinstance(exc, (httpx2.ConnectError, httpx2.ConnectTimeout))
                 if (idempotent or connect_only) and attempt < self._max_retries:
                     await sleep_backoff(attempt, base=self._backoff_base, max_delay=self._backoff_max)
                     attempt += 1

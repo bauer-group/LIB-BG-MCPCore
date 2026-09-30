@@ -57,6 +57,7 @@ nav:
       - Extensions: extensions.md
       - Observability & limits: observability.md
       - Deployment: deployment.md
+      - Migrating to 2.0: migration-v2.md
   - Reference:
       - Profile schema: profiles.md
       - Writing plugins: plugins.md

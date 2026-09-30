@@ -2,7 +2,7 @@
 
 Fetches an OpenAPI 3 spec once at startup, caches it in memory, and optionally
 refreshes on a fixed interval. A refresh failure NEVER tears down the cached
-spec. Supports https:// (httpx) and file:// (local) sources, and resolves
+spec. Supports https:// (httpx2) and file:// (local) sources, and resolves
 external ``$ref`` pointers so unbundled modular specs work at runtime.
 
 Ported from bg-shlink-mcp (neutralised logger + user agent). No heavy deps:
@@ -21,7 +21,7 @@ from typing import Any
 from urllib.parse import unquote, urljoin, urlparse
 from urllib.request import url2pathname
 
-import httpx
+import httpx2
 
 from ..observability import get_logger
 
@@ -157,7 +157,7 @@ async def _fetch_remote(url: str, *, timeout: float) -> str:
         "Accept": "application/json, application/yaml, text/yaml",
         "User-Agent": "bg-mcpcore",
     }
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         timeout=timeout, headers=headers, follow_redirects=True
     ) as client:
         response = await client.get(url)

@@ -12,13 +12,12 @@ both shapes must work unchanged through the library's seams:
 
 from __future__ import annotations
 
-import httpx
 import pytest
-import respx
 
 from bg_mcpcore import BaseMcpSettings, build_app_from_profile, load_profile
 from bg_mcpcore.auth.resolvers import StaticHeaderResolver
 from bg_mcpcore.http.client import UpstreamClient
+from bg_mcpcore.testing import mock_upstream, upstream_response
 
 
 class _Demo(BaseMcpSettings):
@@ -35,8 +34,8 @@ def test_static_header_resolver_exposes_default_header() -> None:
 @pytest.mark.asyncio
 async def test_static_header_is_sent_on_every_request() -> None:
     client = UpstreamClient(base_url="https://api.test", auth=StaticHeaderResolver("X-Api-Key", "k"))
-    with respx.mock:
-        route = respx.get("https://api.test/ping").mock(return_value=httpx.Response(200))
+    with mock_upstream() as router:
+        route = router.get("https://api.test/ping").mock(return_value=upstream_response(200))
         await client.request("GET", "/ping")
     await client.aclose()
     assert route.calls.last.request.headers["X-Api-Key"] == "k"
@@ -63,8 +62,8 @@ class _OnBehalfOfResolver:
 @pytest.mark.asyncio
 async def test_obo_resolver_forwards_the_per_user_token() -> None:
     client = UpstreamClient(base_url="https://api.test", auth=_OnBehalfOfResolver("user-tok"))
-    with respx.mock:
-        route = respx.get("https://api.test/me").mock(return_value=httpx.Response(200))
+    with mock_upstream() as router:
+        route = router.get("https://api.test/me").mock(return_value=upstream_response(200))
         await client.request("GET", "/me")
     await client.aclose()
     assert route.calls.last.request.headers["Authorization"] == "Bearer user-tok"

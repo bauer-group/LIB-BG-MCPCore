@@ -112,7 +112,7 @@ The minimum is a `spec.source`; everything else is optional shaping.
 
 - a **bare filesystem path** — including a Windows path like `C:\specs\api.json`
 - a **`file://` URL** — resolved cross-platform
-- an **`http://` / `https://` URL** — fetched with `httpx` (redirects followed)
+- an **`http://` / `https://` URL** — fetched with `httpx2` (redirects followed)
 
 JSON is parsed with the standard library. **YAML** specs are detected
 automatically and parsed lazily via `pyyaml` from the `[openapi]` extra; without
@@ -122,7 +122,7 @@ that parses but yields **zero operations** (empty or unresolved `paths`) is
 rejected with a `SpecLoadError`.
 
 !!! note "Static outbound header is baked in"
-    The provider hands `FastMCP.from_openapi` the `UpstreamClient`'s **raw httpx
+    The provider hands `FastMCP.from_openapi` the `UpstreamClient`'s **raw httpx2
     client** (`ctx.client.httpx_client`), whose default headers already carry the
     static outbound credential resolved from the profile's `auth.outbound`. Every
     generated tool therefore calls the backend pre-authenticated. See

@@ -12,7 +12,7 @@ maps, name overrides) use ``extra="allow"`` so a profile stays valid before the
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -79,6 +79,33 @@ class ExtensionsRef(BaseModel):
     required: bool = False
 
 
+class CacheConfig(BaseModel):
+    """Response-freshness hints for cacheable results (FastMCP 4, SEP-2549).
+
+    A caching client may reuse a result for ``ttl`` seconds instead of making
+    another round trip. FastMCP applies the hint to the results the protocol
+    treats as cacheable — ``tools/list``, ``prompts/list``, ``resources/list``,
+    ``resources/templates/list``, ``server/discover`` and ``resources/read``.
+    Tool CALLS are never cached, so a tool always executes.
+
+    That makes this worth setting on a server whose catalogue is stable and
+    whose clients re-list often, and on config-driven resources, whose reads go
+    through ``resources/read``.
+
+    This is a HINT, not an authorization boundary: it says how stale an answer
+    may be, never who may read it. ``scope`` decides whether a SHARED cache (a
+    proxy, a fleet-wide store) may hold the entry — keep the ``"private"``
+    default for anything that varies by the caller's identity or permissions,
+    so one user's result can never be served to another. Use ``"public"`` only
+    for responses identical for every caller, such as a read-only catalogue.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    ttl: int = Field(ge=1, le=86_400)
+    scope: Literal["public", "private"] = "private"
+
+
 class AccessControlConfig(BaseModel):
     """Declares a coarse role/claim access gate on every authenticated request.
 
@@ -110,6 +137,7 @@ class Profile(BaseModel):
     routes: RoutesConfig = Field(default_factory=RoutesConfig)
     extensions: ExtensionsRef | None = None
     access_control: AccessControlConfig | None = None
+    cache: CacheConfig | None = None
 
     @property
     def tool_sources(self) -> list[ToolsConfig]:
@@ -120,6 +148,7 @@ __all__ = [
     "AccessControlConfig",
     "AuthConfig",
     "BackendConfig",
+    "CacheConfig",
     "ExtensionsRef",
     "InboundAuthConfig",
     "OutboundAuthConfig",

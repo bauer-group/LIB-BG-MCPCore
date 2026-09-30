@@ -41,6 +41,7 @@ dmypy.json
 .env
 .envrc
 .venv
+.venv*/
 env/
 venv/
 ENV/

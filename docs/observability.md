@@ -20,7 +20,7 @@ Logging is configured first so that everything after it — including Sentry's i
 
 ## :material-text-box-outline:  Structured logging
 
-Logging is built on [structlog](https://www.structlog.org/). structlog is the single source of truth: stdlib `logging` is routed through it as well, so third-party libraries (`httpx`, `fastmcp`, `uvicorn`) emit in the same shape as your own log lines. `setup_logging()` is idempotent — calling it twice is a no-op until `reset_logging()` is called (used only by tests).
+Logging is built on [structlog](https://www.structlog.org/). structlog is the single source of truth: stdlib `logging` is routed through it as well, so third-party libraries (`httpx2`, `fastmcp`, `uvicorn`) emit in the same shape as your own log lines. `setup_logging()` is idempotent — calling it twice is a no-op until `reset_logging()` is called (used only by tests).
 
 ### Two output modes
 
@@ -34,7 +34,7 @@ The output mode is selected by `LOG_FORMAT`:
 !!! note "JSON is the default"
     `LOG_FORMAT` defaults to `json`. Set `LOG_FORMAT=console` explicitly for readable local output.
 
-`LOG_LEVEL` (default `INFO`) is resolved against the stdlib `logging` levels and applied both to the root logger and to structlog's filtering bound logger. A few notoriously chatty libraries are clamped to at least `WARNING` even when the root level is lower — `httpx`, `httpcore`, and `hpack` (the latter is pinned to `WARNING` outright).
+`LOG_LEVEL` (default `INFO`) is resolved against the stdlib `logging` levels and applied both to the root logger and to structlog's filtering bound logger. A few notoriously chatty libraries are clamped to at least `WARNING` even when the root level is lower — `httpx2`, `httpcore2`, `httpx`, `httpcore`, and `hpack` (the latter is pinned to `WARNING` outright). FastMCP 4 and the upstream client log under the `httpx2`/`httpcore2` names; the older pair is kept clamped for tools that still issue their own `httpx` calls.
 
 ### What gets logged and what it looks like
 
