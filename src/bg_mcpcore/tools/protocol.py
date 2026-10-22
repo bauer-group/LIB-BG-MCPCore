@@ -19,7 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from ..http.client import UpstreamClient
+from ..http import Response, UpstreamClient
 from ..observability import get_logger
 
 if TYPE_CHECKING:
@@ -54,11 +54,13 @@ class ToolContext:
     client: UpstreamClient | None = None
     logger: Any = field(default_factory=lambda: get_logger("bg-mcpcore.tools"))
 
-    async def request(self, method: str, path: str, **kwargs: Any) -> Any:
+    async def request(self, method: str, path: str, **kwargs: Any) -> Response:
         """Authenticated upstream call routed through the outbound resolver.
 
-        Returns the raw ``httpx.Response`` — call ``.json()`` / ``.raise_for_status()``
-        yourself, or use :meth:`request_json` for the common decode-or-raise path.
+        Returns the raw :class:`bg_mcpcore.http.Response` — call ``.json()`` /
+        ``.raise_for_status()`` yourself, or use :meth:`request_json` for the
+        common decode-or-raise path. Import the response and error types from
+        ``bg_mcpcore.http``, never from the HTTP library directly.
         """
         if self.client is None:
             raise RuntimeError("This server has no upstream backend configured")
@@ -123,6 +125,8 @@ class ConstructingToolProvider(Protocol):
         icon_url: str | None,
         website_url: str | None,
         ctx: ToolContext,
+        cache: Any | None = None,
+        session_state_store: Any | None = None,
     ) -> FastMCP: ...
 
 

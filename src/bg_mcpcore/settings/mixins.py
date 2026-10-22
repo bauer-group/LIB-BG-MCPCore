@@ -62,6 +62,19 @@ class AuthPersistenceMixin(BaseModel):
         default="/app/data/oauth-storage",
         description="Filesystem path for the encrypted OAuth state store when AUTH_REDIS_URL is unset.",
     )
+    # FastMCP 4 session state (UserSession / SessionId). The modern protocol has
+    # no transport session, so state a tool wants across calls lives server-side
+    # and is keyed to the authenticated user. FastMCP's default store is
+    # process-local: fine for one replica, silently lossy behind a load balancer
+    # or across a restart. Enabling this points it at the same encrypted store
+    # the OAuth state already uses, so a deployment gains no second backend.
+    mcp_session_state_enabled: bool = Field(
+        default=False,
+        description=(
+            "Persist FastMCP session state (UserSession/SessionId) in the shared "
+            "encrypted store instead of process memory. Requires authentication."
+        ),
+    )
 
 
 class OidcSettingsMixin(BaseModel):
@@ -75,6 +88,38 @@ class OidcSettingsMixin(BaseModel):
     oidc_client_secret: SecretStr | None = None
     oidc_scopes: str = "openid profile email"
     oidc_username_claim: str = "preferred_username"
+
+    # ── Identity assertion (SEP-990 ID-JAG) ──────────────────────────────────
+    # Enterprise on-behalf-of: a corporate IdP signs an assertion that an agent
+    # presents at the token endpoint, and the server exchanges it for a short
+    # access token — no browser, no consent screen, but the employee's real
+    # identity. Setting the issuer list is what enables the grant; leaving it
+    # empty means the jwt-bearer grant stays rejected as unsupported.
+    #
+    # BETA in FastMCP 4.0: the API may change in a minor release.
+    oidc_identity_assertion_issuers: Annotated[list[str], NoDecode] = Field(
+        default_factory=list,
+        description=(
+            "Issuers whose ID-JAG assertions this server trusts (CSV). "
+            "Empty = identity assertion disabled."
+        ),
+    )
+    oidc_identity_assertion_audience: str | None = Field(
+        default=None,
+        description=(
+            "Expected 'aud' on assertions. Defaults to this server's published issuer; "
+            "pin it explicitly to survive an issuer_url change without re-minting."
+        ),
+    )
+    oidc_identity_assertion_algorithm: str = Field(
+        default="RS256",
+        description="JWS algorithm used to verify assertions (asymmetric: RS*/PS*/ES*).",
+    )
+
+    @field_validator("oidc_identity_assertion_issuers", mode="before")
+    @classmethod
+    def _parse_assertion_issuers_csv(cls, value: object) -> list[str]:
+        return split_csv(value)  # type: ignore[arg-type]
 
 
 class RateLimiterMixin(BaseModel):

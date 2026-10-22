@@ -94,6 +94,20 @@ async def build_app_from_profile(
     if len(constructing) > 1:
         raise ProfileError("At most one constructing tool source (e.g. openapi) is allowed")
 
+    # Shared, encrypted session-state store — opt-in, and only meaningful with
+    # auth, since UserSession keys its bucket on the authenticated principal.
+    session_state_store: Any | None = None
+    if getattr(settings, "mcp_session_state_enabled", False):
+        if auth_provider is None:
+            raise ProfileError(
+                "MCP_SESSION_STATE_ENABLED requires an authenticated server: "
+                "session state is keyed on the caller's identity"
+            )
+        from .auth.storage import build_client_storage
+
+        session_state_store = build_client_storage(settings)
+        logger.info("app.session_state_enabled", backend="redis" if settings.auth_redis_url else "disk")
+
     base_url = str(settings.public_base_url).rstrip("/")
     icon_url = settings.mcp_icon_url or profile.icon_url or f"{base_url}/logo.svg"
     website_url = settings.mcp_website_url or profile.website_url
@@ -119,6 +133,8 @@ async def build_app_from_profile(
             icon_url=icon_url,
             website_url=website_url,
             ctx=ctx_scoped,
+            cache=profile.cache,
+            session_state_store=session_state_store,
         )
     else:
         kwargs: dict[str, Any] = {
@@ -129,9 +145,14 @@ async def build_app_from_profile(
         if auth_provider is not None:
             kwargs["auth"] = auth_provider
         if icon_url:
-            kwargs["icons"] = [Icon(src=icon_url, mimeType="image/svg+xml")]
+            kwargs["icons"] = [Icon(src=icon_url, mime_type="image/svg+xml")]
         if website_url:
             kwargs["website_url"] = website_url
+        if profile.cache is not None:
+            kwargs["cache_ttl"] = profile.cache.ttl
+            kwargs["cache_scope"] = profile.cache.scope
+        if session_state_store is not None:
+            kwargs["session_state_store"] = session_state_store
         mcp = FastMCP(**kwargs)
 
     # Rate limiter goes on FIRST - cheapest rejection path under load.

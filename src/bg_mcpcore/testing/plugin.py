@@ -10,8 +10,12 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Iterator
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    import respx
 
 
 @pytest.fixture
@@ -47,3 +51,16 @@ def valid_base_env() -> dict[str, str]:
         "AUTH_MODE": "none",
         "MCP_DISPLAY_NAME": "Test MCP",
     }
+
+
+@pytest.fixture
+def mock_upstream() -> Iterator[respx.Router]:
+    """respx router that intercepts bg-mcpcore's httpx2 upstream calls.
+
+    Pair it with :func:`bg_mcpcore.testing.upstream_response` to build the
+    mocked responses — see that module for why the two differ.
+    """
+    from bg_mcpcore.testing.http import mock_upstream as _mock_upstream
+
+    with _mock_upstream() as router:
+        yield router

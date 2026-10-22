@@ -12,6 +12,9 @@ Caveats:
   ``env_prefix``), so per-backend secrets that would collide on the same env var
   name need a bespoke settings type. The common case — a few read-mostly
   backends behind one gateway — works as-is.
+* Background tasks: FastMCP 4 serves extensions from the root only, so a
+  task-bearing sub-profile causes the gateway itself to register the tasks
+  extension (handled below). The ``[tasks]`` extra must be installed.
 * Inbound auth belongs on the PARENT (pass ``auth=`` through to the gateway's
   HTTP layer when you serve it); the sub-servers are composed for their tool /
   resource / prompt surface, not their own auth wall. Build the sub-profiles
@@ -25,6 +28,7 @@ from typing import TYPE_CHECKING
 from .app import build_app_from_profile
 from .observability import get_logger
 from .settings.base import BaseMcpSettings
+from .tools.tasks import ensure_tasks_extension, has_tasks_extension
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -67,6 +71,11 @@ async def build_gateway(
         # `namespace` is FastMCP 3.x's prefix mechanism (the old `prefix=` kwarg
         # is deprecated); tools surface as ``<namespace>_<tool>``.
         parent.mount(sub, namespace=prefix)
+        # A child's extensions do not propagate to the root, but the root's
+        # get_tasks() aggregates the child's task tools — so a gateway fronting
+        # a task-bearing profile must carry the tasks extension itself.
+        if has_tasks_extension(sub):
+            ensure_tasks_extension(parent)
         logger.info("gateway.mounted", prefix=prefix, profile=profile.id)
 
     logger.info("gateway.built", mounts=len(mounts), prefixes=sorted(seen))

@@ -109,3 +109,44 @@ def test_prompt_dollar_escape_is_allowed(tmp_path) -> None:  # type: ignore[no-u
     )
     cfg = load_config(source)  # must not raise
     assert len(cfg.prompts) == 1
+
+
+# ── FastMCP 4: templated resources are path-screened before the handler ────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("value", ["abc123", "a..b", "HEAD~3..HEAD", "v1.2.3", ".env", "7"])
+async def test_realistic_resource_ids_survive_path_screening(value: str) -> None:
+    """FastMCP 4 screens template params for traversal before the handler runs.
+
+    Only a STANDALONE ``..`` segment counts, so the identifier shapes a REST
+    backend actually uses keep working and need no ResourceSecurity exemption.
+    Pinned because a widening of that rule would silently 404 live resources.
+    """
+    from fastmcp import Client, FastMCP
+
+    mcp = FastMCP(name="t")
+
+    @mcp.resource("data://item/{code}")
+    async def item(code: str) -> str:
+        return f"got:{code}"
+
+    async with Client(mcp) as client:
+        result = await client.read_resource(f"data://item/{value}")
+    assert result[0].text == f"got:{value}"  # type: ignore[union-attr]
+
+
+@pytest.mark.asyncio
+async def test_traversal_segment_is_rejected_non_leakily() -> None:
+    """A bare ``..`` is refused, and the error does not disclose why."""
+    from fastmcp import Client, FastMCP
+
+    mcp = FastMCP(name="t")
+
+    @mcp.resource("data://item/{code}")
+    async def item(code: str) -> str:  # pragma: no cover - must never be reached
+        return f"got:{code}"
+
+    async with Client(mcp) as client:
+        with pytest.raises(Exception, match="not found"):
+            await client.read_resource("data://item/..")

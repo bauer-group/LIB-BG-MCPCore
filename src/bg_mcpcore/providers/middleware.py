@@ -15,6 +15,7 @@ from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 
 from ..observability import get_logger
 from .entra import is_tenant_allowed
+from .gating import should_gate
 
 logger = get_logger("bg-mcpcore.auth.tenant")
 
@@ -39,6 +40,10 @@ class TenantAllowlistMiddleware(Middleware):
         if token is None:
             return await call_next(context)
         if is_tenant_allowed(token.claims, self._allowed_tenants):
+            return await call_next(context)
+        # FastMCP 4 routes discovery (server/discover, initialize) through
+        # on_request too; let the connection establish and deny the rest.
+        if not should_gate(context.method):
             return await call_next(context)
         return await self._handle_disallowed(token.claims, context, call_next)
 

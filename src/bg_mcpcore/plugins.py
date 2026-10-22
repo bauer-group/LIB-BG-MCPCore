@@ -125,6 +125,19 @@ def _read_secret(cfg: OutboundAuthConfig, env: Mapping[str, str]) -> str:
     raise ProfileError(f"Outbound auth type '{cfg.type}' requires value_from_env or value")
 
 
+# The outbound auth types dispatched by build_outbound_resolver, in the order a
+# reader meets them. Surfaced verbatim in its "Unknown outbound auth type" error.
+BUILTIN_OUTBOUND_TYPES = (
+    "none",
+    "static_header",
+    "bearer_env",
+    "per_user_token",
+    "entra_obo",
+    "client_credentials",
+    "python",
+)
+
+
 def build_outbound_resolver(
     cfg: OutboundAuthConfig, *, env: Mapping[str, str] | None = None
 ) -> AuthHeaderSource:
@@ -144,6 +157,14 @@ def build_outbound_resolver(
         from .auth.obo import build_per_user_resolver
 
         return build_per_user_resolver(cfg, env)
+    if kind == "entra_obo":
+        from .auth.obo import build_entra_obo_resolver
+
+        return build_entra_obo_resolver(cfg, env)
+    if kind == "client_credentials":
+        from .auth.client_credentials import build_client_credentials_resolver
+
+        return build_client_credentials_resolver(cfg, env)
     if kind == "python":
         if not cfg.resolver:
             raise ProfileError("Outbound auth 'python' requires 'resolver' (dotted module:attr)")
@@ -152,7 +173,10 @@ def build_outbound_resolver(
     eps = _discover("bg_mcpcore.auth_resolvers")
     if kind in eps:
         return eps[kind].load()(cfg)  # type: ignore[no-any-return]
-    known = ["none", "static_header", "bearer_env", "per_user_token", "python", *sorted(eps)]
+    # Keep in step with the dispatch branches above — a missing entry tells a
+    # user with a typo that the type does not exist. Pinned by
+    # tests/test_plugin_discovery.py::test_known_outbound_types_match_dispatch.
+    known = [*BUILTIN_OUTBOUND_TYPES, *sorted(eps)]
     raise ProfileError(f"Unknown outbound auth type '{kind}'. Known: {', '.join(known)}")
 
 

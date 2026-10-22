@@ -84,6 +84,16 @@ secret field names.
 ## :material-link-lock:  FastMCP-version coupling
 
 The core pins FastMCP for the fleet and binds to a few private FastMCP symbols
-(e.g. `derive_jwt_key`). A security regression test guards the storage
-key-derivation invariant so a FastMCP bump that changes it fails loudly.
+(e.g. `derive_jwt_key`, and the extension registry read by
+`tools.tasks.has_tasks_extension`). Security regression tests guard the storage
+key-derivation invariant so a FastMCP bump that changes it fails loudly instead
+of silently invalidating every deployed OAuth session.
+
+Since 2.0 the core also pins the *dispatch* facts its access gates depend on —
+which MCP methods reach `Middleware.on_request` on each protocol era — so a
+FastMCP release that reroutes a method fails the suite rather than silently
+widening or narrowing what the fleet enforces. See
+[`providers/gating.py`](https://github.com/bauer-group/LIB-BG-MCPCore/blob/main/src/bg_mcpcore/providers/gating.py)
+for the enforcement policy: a principal outside the tenant/role allowlist may
+complete discovery and is denied every operation after it, listing included.
 Reporting: see [SECURITY.MD](https://github.com/bauer-group/LIB-BG-MCPCore/blob/main/SECURITY.MD).

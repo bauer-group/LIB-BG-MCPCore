@@ -230,10 +230,8 @@ async def test_tenant_middleware_audit_only_passes_off_allowlist(monkeypatch) ->
 
 
 def test_discover_endpoints_returns_validated_doc() -> None:
-    import httpx
-    import respx
-
     from bg_mcpcore.auth.generic_oidc import discover_endpoints
+    from bg_mcpcore.testing import mock_upstream, upstream_response
 
     doc = {
         "authorization_endpoint": "https://idp/a",
@@ -241,21 +239,19 @@ def test_discover_endpoints_returns_validated_doc() -> None:
         "jwks_uri": "https://idp/j",
         "issuer": "https://idp",
     }
-    with respx.mock:
-        respx.get("https://idp/.well-known/openid-configuration").mock(
-            return_value=httpx.Response(200, json=doc)
+    with mock_upstream() as router:
+        router.get("https://idp/.well-known/openid-configuration").mock(
+            return_value=upstream_response(200, json=doc)
         )
         out = discover_endpoints("https://idp/.well-known/openid-configuration")
     assert out["issuer"] == "https://idp"
 
 
 def test_discover_endpoints_missing_field_fails() -> None:
-    import httpx
-    import respx
-
     from bg_mcpcore.auth.generic_oidc import OIDCDiscoveryError, discover_endpoints
+    from bg_mcpcore.testing import mock_upstream, upstream_response
 
-    with respx.mock:
-        respx.get("https://idp/c").mock(return_value=httpx.Response(200, json={"issuer": "x"}))
+    with mock_upstream() as router:
+        router.get("https://idp/c").mock(return_value=upstream_response(200, json={"issuer": "x"}))
         with pytest.raises(OIDCDiscoveryError, match="missing required"):
             discover_endpoints("https://idp/c")

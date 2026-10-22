@@ -92,6 +92,8 @@ Rules:
 | `static_header` | a fixed header, e.g. `X-Api-Key` (`header` + `value_from_env`) |
 | `bearer_env` | `Authorization: Bearer <token>` from an env var |
 | `per_user_token` | **on-behalf-of**: forwards the caller's upstream token per request, fail-closed. Resolves from the access-token `claims` then OAuth-state storage (jti/sub); optional `static_fallback_env` + `static_fallback_template`. Needs a python/request tool surface (not OpenAPI). |
+| `client_credentials` | **service token**: OAuth2 client-credentials against the upstream's `token_url`, cached and re-minted before expiry (`client_id_env` + `client_secret_env` + optional `scopes`/`audience`). Per-call, so it needs a python/request tool surface. |
+| `entra_obo` | **native Entra on-behalf-of** (`scopes: [...]`): exchanges the caller's Entra token via azure-identity. Prefer over `per_user_token` on the `entra-*` auth modes — supported API, and it can request scopes the caller's token never carried. Needs `[oauth-providers]` and a python/request tool surface. |
 | `python` | escape hatch: `resolver: "module:factory"` returning an `AuthHeaderSource` |
 
 A per-call resolver MUST raise when it cannot produce a credential — never fall
@@ -107,6 +109,14 @@ back to a static default silently (fail-closed; see [docs/security.md](docs/secu
   "items_path": "data.items", "page_param": "page", "page_size_param": "per_page",
   "current_page_path": "...", "total_pages_path": "...", "formats": ["csv","json"],
   "task": { "mode": "required" } }` — paginates + renders as a task ([tasks] extra).
+- **Response caching** → `"cache": { "ttl": 300, "scope": "public" }`. Hints a
+  caching client may reuse `tools/list`, `prompts/list`, `resources/list`,
+  `resources/templates/list`, `server/discover` and `resources/read`; tool CALLS
+  are never cached. Keep the `"private"` default for anything varying by caller —
+  `"public"` lets a SHARED cache hold it.
+- **Session state** → `MCP_SESSION_STATE_ENABLED=true` puts FastMCP's
+  `UserSession`/`SessionId` in the shared encrypted store instead of process
+  memory (needed behind a load balancer). Requires authentication.
 
 ## Escape hatches (when config is not enough)
 
@@ -115,6 +125,11 @@ back to a static default silently (fail-closed; see [docs/security.md](docs/secu
   `ToolContext`; OpenAPI/registry/export sources get a settings-less one — least
   privilege). Inside a tool, `await ctx.request_json(method, path)` decodes on 2xx
   and raises `UpstreamError` (or your `error_factory`) on non-2xx — no decode shim.
+  Import HTTP types from `bg_mcpcore.http` (`Response`, `HTTPStatusError`,
+  `ConnectError`, …) — **never `import httpx`**. bg-mcpcore runs on httpx2, so an
+  `except httpx.X` handler still imports and type-checks and silently never
+  matches. Mock upstreams in tests with `bg_mcpcore.testing.mock_upstream` /
+  `upstream_response`.
 - **Custom outbound credential** → `auth.outbound.type: "python"`.
 - **Reusable central tools** → `tools: { "source": "registry", "include": ["bg.ping", …] }`.
 

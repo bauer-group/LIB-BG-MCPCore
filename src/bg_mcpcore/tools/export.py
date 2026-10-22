@@ -8,7 +8,8 @@ convention needs no Python.
 
 The provider is a *registering* tool source: it drives ``ctx.request`` (the
 authenticated upstream client), so it works with a settings-less context — no
-secrets needed. Requires the ``[tasks]`` extra (FastMCP TaskConfig).
+secrets needed. Requires the ``[tasks]`` extra: FastMCP 4 serves tasks through the
+``io.modelcontextprotocol/tasks`` extension, which this source registers.
 """
 
 from __future__ import annotations
@@ -142,6 +143,13 @@ class ExportToolProvider:
 
     async def register(self, mcp: FastMCP, ctx: ToolContext) -> int:
         from fastmcp.utilities.tasks import TaskConfig
+
+        from .tasks import ensure_tasks_extension
+
+        # FastMCP 4: `task=` is only an intent declaration — without the tasks
+        # extension the server refuses to start. Idempotent: a profile may
+        # declare several export tools.
+        ensure_tasks_extension(mcp)
 
         cfg = self._cfg
         task_config = TaskConfig(

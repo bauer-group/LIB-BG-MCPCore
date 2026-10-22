@@ -166,6 +166,8 @@ dependencies = [
 test = [
     "pytest>=8.3.0,<10.0.0",
     "pytest-asyncio>=0.24.0,<2.0.0",
+    # mock_upstream / upstream_response: mocking the httpx2 upstream client.
+    "bg-mcpcore[testkit] @ git+https://github.com/bauer-group/LIB-BG-MCPCore.git@v{v['version']}",
 ]
 
 [project.scripts]

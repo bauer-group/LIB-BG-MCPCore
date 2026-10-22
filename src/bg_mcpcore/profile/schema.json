@@ -64,6 +64,32 @@
       "title": "BackendConfig",
       "type": "object"
     },
+    "CacheConfig": {
+      "additionalProperties": false,
+      "description": "Response-freshness hints for cacheable results (FastMCP 4, SEP-2549).\n\nA caching client may reuse a result for ``ttl`` seconds instead of making\nanother round trip. FastMCP applies the hint to the results the protocol\ntreats as cacheable \u2014 ``tools/list``, ``prompts/list``, ``resources/list``,\n``resources/templates/list``, ``server/discover`` and ``resources/read``.\nTool CALLS are never cached, so a tool always executes.\n\nThat makes this worth setting on a server whose catalogue is stable and\nwhose clients re-list often, and on config-driven resources, whose reads go\nthrough ``resources/read``.\n\nThis is a HINT, not an authorization boundary: it says how stale an answer\nmay be, never who may read it. ``scope`` decides whether a SHARED cache (a\nproxy, a fleet-wide store) may hold the entry \u2014 keep the ``\"private\"``\ndefault for anything that varies by the caller's identity or permissions,\nso one user's result can never be served to another. Use ``\"public\"`` only\nfor responses identical for every caller, such as a read-only catalogue.",
+      "properties": {
+        "ttl": {
+          "maximum": 86400,
+          "minimum": 1,
+          "title": "Ttl",
+          "type": "integer"
+        },
+        "scope": {
+          "default": "private",
+          "enum": [
+            "public",
+            "private"
+          ],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ttl"
+      ],
+      "title": "CacheConfig",
+      "type": "object"
+    },
     "ExtensionsRef": {
       "additionalProperties": false,
       "properties": {
@@ -301,6 +327,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/AccessControlConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "cache": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CacheConfig"
         },
         {
           "type": "null"

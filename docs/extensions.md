@@ -211,7 +211,7 @@ On invocation the runner:
 3. Decodes the body: if the response `content-type` contains `json` **or** the entry's `mime_type` is `application/json`, it returns `response.json()`; otherwise it returns `response.text`.
 
 !!! warning "Path params are percent-encoded — a value can't escape its segment"
-    Each placeholder value is percent-encoded with `urllib.parse.quote(value, safe="")` before substitution, because `httpx` does not re-encode interpolated path strings. This means `/` and other reserved characters in a value are escaped (`abc/visits` → `abc%2Fvisits`), so a malicious or accidental value **cannot break out of its path segment** and traverse to another endpoint. This is a deliberate security property of resource templates.
+    Each placeholder value is percent-encoded with `urllib.parse.quote(value, safe="")` before substitution, because `httpx2` does not re-encode interpolated path strings. This means `/` and other reserved characters in a value are escaped (`abc/visits` → `abc%2Fvisits`), so a malicious or accidental value **cannot break out of its path segment** and traverse to another endpoint. This is a deliberate security property of resource templates.
 
 ### Full resource example
 

@@ -6,6 +6,7 @@ from .loader import ProfileError, load_profile
 from .models import (
     AuthConfig,
     BackendConfig,
+    CacheConfig,
     InboundAuthConfig,
     OutboundAuthConfig,
     Profile,
@@ -16,6 +17,7 @@ from .models import (
 __all__ = [
     "AuthConfig",
     "BackendConfig",
+    "CacheConfig",
     "InboundAuthConfig",
     "OutboundAuthConfig",
     "Profile",

@@ -12,7 +12,7 @@ import random
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 
-import httpx
+import httpx2
 
 # Transient statuses worth retrying. 4xx (except 429) are caller errors and are
 # never retried.
@@ -28,7 +28,7 @@ DEFAULT_BACKOFF_BASE = 0.25
 DEFAULT_BACKOFF_MAX = 4.0
 
 
-def parse_retry_after(response: httpx.Response) -> float | None:
+def parse_retry_after(response: httpx2.Response) -> float | None:
     """Read a Retry-After header if present and sane (delta-seconds OR HTTP-date).
 
     RFC 9110 allows both ``Retry-After: 120`` and ``Retry-After: Wed, 21 Oct 2026

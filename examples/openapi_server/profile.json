@@ -8,13 +8,27 @@
     "api_base_path": ""
   },
   "auth": {
-    "inbound": { "mode": "none" },
-    "outbound": { "type": "bearer_env", "value_from_env": "PETSTORE_TOKEN" }
+    "inbound": {
+      "mode": "none"
+    },
+    "outbound": {
+      "type": "bearer_env",
+      "value_from_env": "PETSTORE_TOKEN"
+    }
   },
   "tools": {
     "source": "openapi",
-    "spec": { "source": "petstore-mini.json" },
-    "name_overrides": { "GET /pets": "list_pets", "POST /pets": "create_pet" },
+    "spec": {
+      "source": "petstore-mini.json"
+    },
+    "name_overrides": {
+      "GET /pets": "list_pets",
+      "POST /pets": "create_pet"
+    },
     "annotations": "by_http_method"
+  },
+  "cache": {
+    "ttl": 300,
+    "scope": "public"
   }
 }

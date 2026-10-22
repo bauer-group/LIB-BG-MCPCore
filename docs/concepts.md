@@ -155,6 +155,18 @@ invalidating every deployed OAuth session. Volatile concerns (OpenAPI tooling,
 Azure, Redis, docket) are isolated in optional extras, so a churn there cannot
 destabilise core.
 
+The public API is deliberately **not** a FastMCP re-export: `bg_mcpcore` exposes
+its own names and no FastMCP symbol, so FastMCP's churn lands on this library's
+modules rather than on your server. The FastMCP 4 migration is the proof — the
+one change that reached tool code was the `httpx` → `httpx2` swap, which is why
+the HTTP types are now re-exported from `bg_mcpcore.http` too. Import them from
+there and the next such move costs your repo nothing.
+
+Servers pin bg-mcpcore by **git tag**, not by version range, so no server ever
+upgrades on its own: a framework release with a breaking change cannot reach a
+repo until someone bumps the tag deliberately. See
+[Migrating to 2.0](migration-v2.md).
+
 ## :material-arrow-right-circle:  Where to go next
 
 - [Installation](installation.md) · [Quickstart](quickstart.md)

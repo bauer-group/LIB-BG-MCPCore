@@ -12,7 +12,7 @@ pip-installable package, never a core edit. Three groups:
 | `bg_mcpcore.tool_sources` | a `tools.source` value | `python`, `registry`, `openapi` |
 | `bg_mcpcore.auth_providers` | an inbound `AUTH_MODE` | `none`, `oidc` (core); `entra-single`, `entra-multi`, `google`, `auth0`, `aws-cognito`, `clerk`, `descope`, `discord`, `github`, `keycloak`, `oci`, `propelauth`, `scalekit`, `supabase`, `workos` (`[oauth-providers]`) |
 | `bg_mcpcore.auth_middleware` | post-auth gate per mode | `entra-multi` (tenant allowlist) |
-| `bg_mcpcore.auth_resolvers` | an outbound `auth.type` | `none`, `static_header`, `bearer_env`, `python` |
+| `bg_mcpcore.auth_resolvers` | an outbound `auth.type` | `none`, `static_header`, `bearer_env`, `per_user_token`, `entra_obo`, `client_credentials`, `python` |
 | `bg_mcpcore.tools` | a named tool for `tools.source: registry` | `bg.ping`, `bg.health` |
 
 The built-ins listed above are hardcoded in core (the one exception is the

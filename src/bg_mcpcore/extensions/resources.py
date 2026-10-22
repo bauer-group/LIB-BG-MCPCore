@@ -3,7 +3,7 @@
 Each entry becomes a FunctionResource (static URI) or ResourceTemplate
 (parameterised URI). Ported from bg-shlink-mcp with one hardening change: the
 GET goes through the ``UpstreamClient`` (so the outbound auth resolver applies),
-not a raw httpx client.
+not a raw httpx2 client.
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ def _build_resource_function(
     backend_path = cfg.backend.path
 
     async def _runner(**kwargs: str) -> Any:
-        # Percent-encode placeholder values (httpx does not re-encode interpolated
+        # Percent-encode placeholder values (httpx2 does not re-encode interpolated
         # path strings) so a value like "abc/visits" cannot escape the segment.
         path = backend_path
         for name, value in kwargs.items():

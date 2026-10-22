@@ -37,6 +37,8 @@ extras so a profile stays valid before the relevant extra is installed.
 | `tools` | object **or list** | one or more tool sources |
 | `routes` | object | toggles for `healthz` / `logo` / `index` |
 | `extensions` | object | optional declarative prompts + resources catalogue |
+| `access_control` | object | optional role/claim gate (`roles_claim`) |
+| `cache` | object | optional response-freshness hints (see below) |
 
 ## :material-server:  `backend`
 
@@ -93,6 +95,8 @@ no `config`. See [plugins](plugins.md) for the full provider catalogue.
 | `static_header` | `header` + `value_from_env` | a fixed header (Shlink's `X-Api-Key`) |
 | `bearer_env` | `value_from_env` | `Authorization: Bearer <token>` |
 | `per_user_token` | — (optional `static_fallback_env`) | **on-behalf-of**: the caller's upstream token, per request, fail-closed |
+| `client_credentials` | `token_url` + `client_id_env` + `client_secret_env` | **service token**: OAuth2 client-credentials, minted and cached by the server itself |
+| `entra_obo` | `scopes` (non-empty list) | **native Entra on-behalf-of** via azure-identity; prefer over `per_user_token` on the `entra-*` modes |
 | `python` | `resolver` (dotted `module:attr`) | a custom `AuthHeaderSource` (bespoke signed headers) |
 | *(plugin)* | per resolver | any `bg_mcpcore.auth_resolvers` entry point |
 
@@ -106,10 +110,49 @@ python/request tool surface (the OpenAPI source uses the bare client). Optional
 keys: `scheme`, `claims`, `storage_key_prefixes`, `static_fallback_env`,
 `static_fallback_template`.
 
+`entra_obo` is the better on-behalf-of path on `AUTH_MODE=entra-single` /
+`entra-multi`. Instead of *finding* a token the IdP already issued, it *mints*
+one: FastMCP's `EntraOBOToken` drives azure-identity's `OnBehalfOfCredential`,
+with that SDK's own cache and refresh behind it. Because it is a supported API it
+does not depend on the shape of FastMCP's OAuth-state storage, and it can request
+scopes the caller's original token never carried. `scopes` is required, and every
+scope must also appear in the provider's `additional_authorize_scopes` with admin
+consent granted. Optional keys: `header`, `scheme`. Needs the
+`[oauth-providers]` extra.
+
+`client_credentials` is for an upstream that issues its own service tokens rather
+than accepting a static key. The server authenticates as itself — no user, no
+browser — against `token_url`, caches the token and re-mints it shortly before it
+expires. The credential comes from the environment: `client_id_env` and
+`client_secret_env` name the variables, and the resolver refuses to build if they
+are unset. Optional keys: `scopes` (list, sent space-joined), `audience`,
+`header` (default `Authorization`), `scheme` (default `Bearer`), `auth_style` —
+`basic` (default, HTTP Basic on the token endpoint) or `post` (credentials in the
+form body, required by endpoints that only accept `client_secret_post`) — and
+`timeout` (seconds, default `30`).
+
+```jsonc
+"outbound": {
+  "type": "client_credentials",
+  "token_url": "https://idp.example.com/oauth/token",
+  "client_id_env": "UPSTREAM_CLIENT_ID",
+  "client_secret_env": "UPSTREAM_CLIENT_SECRET",
+  "scopes": ["api.read"]
+}
+```
+
+!!! warning "Per-call resolvers need a Python tool surface"
+    `per_user_token`, `entra_obo` and `client_credentials` all resolve their
+    credential **per request**, so `default_headers()` is empty by design and the
+    OpenAPI tool source — which drives the bare client — is **not** covered by
+    them. Pair them with a `python` tool source using `ctx.request` /
+    `ctx.request_json`. All three fail closed: when no credential can be produced
+    they raise rather than letting the request go out unauthenticated.
+
 `value_from_env` names the env var holding the secret (resolved fail-closed at
 boot); use `value` only for non-secret literals. A resolver splits credentials
 into **static** `default_headers()` (applied once at client construction — this
-also covers the bare httpx client the OpenAPI source drives) and **per-call**
+also covers the bare httpx2 client the OpenAPI source drives) and **per-call**
 `auth_headers(ctx)` (resolved per request; must **raise** when no credential is
 available — never silently fall back to a static default). See the
 [security model](security.md) and [Tier 3](tiers.md#tier-3-mostly-python).
@@ -195,6 +238,31 @@ verified token's `roles_claim` (a list of strings or `{"name": ...}` objects,
 case-insensitive). A present-but-non-matching role is denied (or audit-logged +
 passed); an **absent** claim passes (a mode that carries no roles defers to the
 upstream); an empty allowlist disables the gate. See [security model](security.md).
+
+## :material-lightning-bolt:  `cache`
+
+Response-freshness hints a caching client may honour instead of making another
+round trip (FastMCP 4, SEP-2549):
+
+```jsonc
+"cache": { "ttl": 300, "scope": "public" }
+```
+
+`ttl` is in seconds (1–86400, required). FastMCP applies the hint to the results
+the protocol treats as cacheable — `tools/list`, `prompts/list`,
+`resources/list`, `resources/templates/list`, `server/discover` and
+`resources/read`. Tool **calls** are never cached, so a tool always executes.
+That makes the block worth setting on a server whose catalogue is stable and
+whose clients re-list often, and on config-driven resources, whose reads go
+through `resources/read`.
+
+!!! danger "`scope` is the security-relevant half"
+    `"public"` permits a **shared** cache — a proxy, a fleet-wide store — to hold
+    the entry, so a result derived from one caller's identity or permissions
+    could be served to another. The default is `"private"`; use `"public"` only
+    for responses that are identical for every caller, such as a read-only
+    reference catalogue. The hint says how *stale* an answer may be, never *who*
+    may read it — it is not an authorization boundary.
 
 ## :material-file-document-check:  A complete annotated profile
 
